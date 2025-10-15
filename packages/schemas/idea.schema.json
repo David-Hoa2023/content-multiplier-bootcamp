@@ -1,0 +1,94 @@
+{
+    "$id": "https://schemas.cm/idea.schema.json",
+    "type": "object",
+    "required": [
+        "idea_id",
+        "one_liner",
+        "personas",
+        "evidence",
+        "scores",
+        "status"
+    ],
+    "properties": {
+        "idea_id": {
+            "type": "string"
+        },
+        "one_liner": {
+            "type": "string"
+        },
+        "angle": {
+            "type": "string"
+        },
+        "personas": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "why_now": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "evidence": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "url",
+                    "quote"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "quote": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "scores": {
+            "type": "object",
+            "required": [
+                "novelty",
+                "demand",
+                "fit",
+                "white_space"
+            ],
+            "properties": {
+                "novelty": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                },
+                "demand": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                },
+                "fit": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                },
+                "white_space": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                }
+            }
+        },
+        "status": {
+            "enum": [
+                "proposed",
+                "selected",
+                "discarded"
+            ]
+        }
+    }
+}

@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+.dist/
+dist/
+.build/
+build/
+.next/
+.next/cache/
+out/
+coverage/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Turborepo / monorepo
+.turbo/
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker
+**/.cache/
+
+# Secrets / local data
+apps/api/.data/
+

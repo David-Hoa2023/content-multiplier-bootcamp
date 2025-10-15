@@ -1,0 +1,144 @@
+{
+    "$id": "https://schemas.cm/content-pack.schema.json",
+    "type": "object",
+    "required": [
+        "pack_id",
+        "brief_id",
+        "derivatives",
+        "status"
+    ],
+    "properties": {
+        "pack_id": {
+            "type": "string"
+        },
+        "brief_id": {
+            "type": "string"
+        },
+        "draft_markdown": {
+            "type": "string"
+        },
+        "claims_ledger": {
+            "$ref": "https://schemas.cm/brief.schema.json#/properties/claims_ledger"
+        },
+        "seo": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "meta_desc": {
+                    "type": "string"
+                },
+                "schema_org": {
+                    "type": "object"
+                }
+            }
+        },
+        "derivatives": {
+            "type": "object",
+            "properties": {
+                "newsletter": {
+                    "type": "object",
+                    "properties": {
+                        "subject": {
+                            "type": "string"
+                        },
+                        "body_md": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "video_script_60s": {
+                    "type": "object",
+                    "properties": {
+                        "hooks": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "beats": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "cta": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "linkedin": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "post_md": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "x": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "post": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "distribution_plan": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "channel": {
+                                "type": "string"
+                            },
+                            "asset": {
+                                "type": "string"
+                            },
+                            "datetime": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "utm": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "channel": {
+                                "type": "string"
+                            },
+                            "template": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "status": {
+            "enum": [
+                "draft",
+                "ready_for_review",
+                "approved",
+                "scheduled",
+                "published"
+            ]
+        }
+    }
+}
