@@ -326,7 +326,7 @@ export default function SettingsPage() {
                         </label>
                         <input
                             type="text"
-                            value={config.baseUrl || LLM_PROVIDERS[config.provider].baseUrl}
+                            value={config.baseUrl || (LLM_PROVIDERS[config.provider] as any).baseUrl}
                             onChange={(e) => updateConfig({ baseUrl: e.target.value })}
                             style={{
                                 width: '100%',

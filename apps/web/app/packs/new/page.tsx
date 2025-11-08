@@ -1,11 +1,11 @@
 'use client'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '../../contexts/LanguageContext'
 import Button from '../../components/Button'
 
-export default function NewPackPage() {
+function NewPackContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const briefId = searchParams.get('brief_id')
@@ -43,6 +43,14 @@ export default function NewPackPage() {
                 </Button>
             </div>
         </main>
+    )
+}
+
+export default function NewPackPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <NewPackContent />
+        </Suspense>
     )
 }
 

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import Button from '../components/Button'
@@ -14,7 +14,7 @@ interface ContentPack {
     brief_id?: string
 }
 
-export default function PacksPage() {
+function PacksContent() {
     const [packs, setPacks] = useState<ContentPack[]>([])
     const [loading, setLoading] = useState(true)
     const searchParams = useSearchParams()
@@ -355,6 +355,14 @@ export default function PacksPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function PacksPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PacksContent />
+        </Suspense>
     )
 }
 
