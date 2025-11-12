@@ -1,0 +1,243 @@
+#!/usr/bin/env node
+
+import fetch from 'node-fetch'
+
+const API_BASE = process.env.API_URL || 'http://localhost:3001'
+
+async function makeRequest(method, endpoint, body = null) {
+    try {
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: body ? JSON.stringify(body) : null
+        })
+
+        const result = await response.json()
+        return result
+    } catch (error) {
+        console.error('Error making request:', error.message)
+        process.exit(1)
+    }
+}
+
+async function startBot() {
+    console.log('Starting Twitter bot...')
+    const result = await makeRequest('POST', '/api/twitter-bot/start', {})
+    
+    if (result.success) {
+        console.log('✅ Twitter bot started successfully')
+    } else {
+        console.error('❌ Failed to start Twitter bot:', result.error)
+        process.exit(1)
+    }
+}
+
+async function stopBot() {
+    console.log('Stopping Twitter bot...')
+    const result = await makeRequest('POST', '/api/twitter-bot/stop', {})
+    
+    if (result.success) {
+        console.log('✅ Twitter bot stopped successfully')
+    } else {
+        console.error('❌ Failed to stop Twitter bot:', result.error)
+        process.exit(1)
+    }
+}
+
+async function statusBot() {
+    const result = await makeRequest('GET', '/api/twitter-bot/status')
+    
+    if (result.success) {
+        const status = result.data
+        console.log('\n📊 Twitter Bot Status')
+        console.log('═'.repeat(50))
+        console.log(`Status: ${status.running ? '🟢 RUNNING' : '🔴 STOPPED'}`)
+        console.log(`Enabled: ${status.config.enabled ? 'Yes' : 'No'}`)
+        console.log(`Interval: Every ${status.config.interval_hours} hours`)
+        console.log(`Max tweets/day: ${status.config.max_tweets_per_day}`)
+        console.log(`Schedule: ${status.config.schedule_times.join(', ')}`)
+        console.log(`Topics: ${status.config.content_topics.join(', ')}`)
+        
+        if (status.next_scheduled) {
+            console.log(`Next post: ${new Date(status.next_scheduled).toLocaleString()}`)
+        }
+        
+        if (status.last_post) {
+            console.log(`Last post: ${new Date(status.last_post.published_at).toLocaleString()}`)
+        }
+        
+        console.log('\n📈 Statistics')
+        console.log('─'.repeat(30))
+        console.log(`Total posts: ${status.stats.total_posts}`)
+        console.log(`Successful: ${status.stats.successful_posts}`)
+        console.log(`Failed: ${status.stats.failed_posts}`)
+        
+        if (status.stats.total_posts > 0) {
+            const successRate = ((status.stats.successful_posts / status.stats.total_posts) * 100).toFixed(1)
+            console.log(`Success rate: ${successRate}%`)
+        }
+    } else {
+        console.error('❌ Failed to get status:', result.error)
+        process.exit(1)
+    }
+}
+
+async function configBot(options = {}) {
+    if (Object.keys(options).length === 0) {
+        // Show current config
+        const result = await makeRequest('GET', '/api/twitter-bot/config')
+        
+        if (result.success) {
+            console.log('\n⚙️  Twitter Bot Configuration')
+            console.log('═'.repeat(50))
+            console.log(JSON.stringify(result.data, null, 2))
+        } else {
+            console.error('❌ Failed to get config:', result.error)
+            process.exit(1)
+        }
+    } else {
+        // Update config
+        const result = await makeRequest('PUT', '/api/twitter-bot/config', options)
+        
+        if (result.success) {
+            console.log('✅ Configuration updated successfully')
+        } else {
+            console.error('❌ Failed to update config:', result.error)
+            process.exit(1)
+        }
+    }
+}
+
+async function logsBot() {
+    const result = await makeRequest('GET', '/api/twitter-bot/history?limit=10')
+    
+    if (result.success) {
+        console.log('\n📋 Recent Twitter Bot Activity')
+        console.log('═'.repeat(70))
+        
+        if (result.data.length === 0) {
+            console.log('No recent activity')
+            return
+        }
+        
+        result.data.forEach((post, index) => {
+            const date = new Date(post.published_at || post.created_at).toLocaleString()
+            const content = JSON.parse(post.content_data).text
+            const preview = content.length > 50 ? content.substring(0, 50) + '...' : content
+            
+            console.log(`\n${index + 1}. ${date}`)
+            console.log(`   Status: ${getStatusEmoji(post.status)} ${post.status.toUpperCase()}`)
+            console.log(`   Content: "${preview}"`)
+            
+            if (post.external_url) {
+                console.log(`   URL: ${post.external_url}`)
+            }
+            
+            if (post.error_message) {
+                console.log(`   Error: ${post.error_message}`)
+            }
+        })
+    } else {
+        console.error('❌ Failed to get logs:', result.error)
+        process.exit(1)
+    }
+}
+
+function getStatusEmoji(status) {
+    switch (status) {
+        case 'published': return '✅'
+        case 'failed': return '❌'
+        case 'processing': return '⏳'
+        case 'pending': return '⏸️'
+        default: return '❓'
+    }
+}
+
+async function enableBot() {
+    // Get current config first
+    const currentResult = await makeRequest('GET', '/api/twitter-bot/config')
+    if (!currentResult.success) {
+        console.error('❌ Failed to get current config:', currentResult.error)
+        process.exit(1)
+    }
+    
+    const updatedConfig = { ...currentResult.data, enabled: true }
+    await configBot(updatedConfig)
+}
+
+async function disableBot() {
+    // Get current config first
+    const currentResult = await makeRequest('GET', '/api/twitter-bot/config')
+    if (!currentResult.success) {
+        console.error('❌ Failed to get current config:', currentResult.error)
+        process.exit(1)
+    }
+    
+    const updatedConfig = { ...currentResult.data, enabled: false }
+    await configBot(updatedConfig)
+}
+
+function showHelp() {
+    console.log(`
+🐦 Twitter Bot Manager
+
+Usage: twitter-bot <command> [options]
+
+Commands:
+  start      Start the Twitter bot service
+  stop       Stop the Twitter bot service  
+  status     Show bot status and statistics
+  enable     Enable automatic posting
+  disable    Disable automatic posting
+  config     Show current configuration
+  logs       Show recent posting activity
+  help       Show this help message
+
+Examples:
+  twitter-bot start
+  twitter-bot status
+  twitter-bot logs
+  twitter-bot config
+
+Environment Variables:
+  API_URL    Base URL for the API (default: http://localhost:3001)
+`)
+}
+
+// Parse command line arguments
+const command = process.argv[2]
+
+switch (command) {
+    case 'start':
+        await startBot()
+        break
+    case 'stop':
+        await stopBot()
+        break
+    case 'status':
+        await statusBot()
+        break
+    case 'enable':
+        await enableBot()
+        break
+    case 'disable':
+        await disableBot()
+        break
+    case 'config':
+        await configBot()
+        break
+    case 'logs':
+        await logsBot()
+        break
+    case 'help':
+    case '--help':
+    case '-h':
+        showHelp()
+        break
+    default:
+        console.error('❌ Unknown command:', command)
+        showHelp()
+        process.exit(1)
+}

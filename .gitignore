@@ -20,6 +20,7 @@ out/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # Local env files
 .env
@@ -56,4 +57,20 @@ uploads/*
 # Logs
 logs/
 *.log
+
+# Turborepo / monorepo
+.turbo/
+
+# Docker
+**/.cache/
+
+# Secrets / local data
+apps/api/.data/
+
+# Claude Code local settings (may contain secrets)
+.claude/settings.local.json
+
+# Test scripts with credentials
+add_mailchimp_creds.js
+test_publish.json
 
