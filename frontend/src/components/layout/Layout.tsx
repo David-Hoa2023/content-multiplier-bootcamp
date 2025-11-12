@@ -51,11 +51,12 @@ interface LayoutProps {
 
 const navigation: NavigationItem[] = [
   { name: 'Ideas', href: '/', icon: Lightbulb },
+  { name: 'Knowledge Base', href: '/knowledge', icon: BookOpen },
   { name: 'Briefs', href: '/briefs', icon: FileText },
   { name: 'Drafts', href: '/drafts', icon: Pen },
   { name: 'Documents', href: '/documents', icon: FolderOpen },
   { name: 'Test Packs', href: '/test-packs-draft', icon: Package },
-  { name: 'Documents Demo', href: '/documents-demo', icon: BookOpen },
+  { name: 'Documents Demo', href: '/documents-demo', icon: FolderOpen },
   { name: 'Multi-platform Publisher', href: '/multi-platform-publisher', icon: Globe },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]

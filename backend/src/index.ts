@@ -9,6 +9,7 @@ import { documentRoutes } from './routes/documents';
 import { briefRoutes } from './routes/briefs';
 import derivativesRoutes from './routes/derivatives';
 import platformRoutes from './routes/platforms';
+import { knowledgeRoutes } from './routes/knowledge';
 import { getAvailableProviders } from './services/aiService';
 import pool from './db';
 
@@ -42,6 +43,7 @@ async function start() {
     await fastify.register(briefRoutes);
     await fastify.register(derivativesRoutes);
     await fastify.register(platformRoutes);
+    await fastify.register(knowledgeRoutes);
 
     // Test database connection (non-blocking)
     try {

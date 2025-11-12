@@ -500,6 +500,87 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
       })
     }
   })
+
+  // Publish content to a platform
+  fastify.post('/platforms/publish', async (request, reply) => {
+    try {
+      const {
+        platform_config_id,
+        platform_type,
+        content,
+        derivative_id,
+        scheduled_time
+      } = request.body as {
+        platform_config_id?: number
+        platform_type: string
+        content: string
+        derivative_id?: number
+        scheduled_time?: string | null
+      }
+
+      // For now, simulate publishing since we don't have actual platform integrations
+      // In a real implementation, this would:
+      // 1. Load the platform configuration
+      // 2. Create platform instance
+      // 3. Call platform.publish(content, options)
+      // 4. Update derivative status in database
+      // 5. Log the publishing event
+
+      const isSuccessful = Math.random() > 0.1 // 90% success rate for demo
+
+      if (isSuccessful) {
+        // Update derivative status if derivative_id provided
+        if (derivative_id) {
+          const updateQuery = `
+            UPDATE derivatives 
+            SET status = 'published', published_at = NOW() 
+            WHERE id = $1
+          `
+          await pool.query(updateQuery, [derivative_id])
+        }
+
+        // Log the publishing event for analytics
+        if (platform_config_id) {
+          const analyticsQuery = `
+            INSERT INTO platform_analytics (platform_config_id, derivative_id, event_type, occurred_at, metadata)
+            VALUES ($1, $2, 'content_published', NOW(), $3)
+          `
+          await pool.query(analyticsQuery, [
+            platform_config_id,
+            derivative_id || null,
+            JSON.stringify({
+              content_length: content.length,
+              platform_type,
+              scheduled_time
+            })
+          ])
+        }
+
+        return {
+          success: true,
+          data: {
+            platform_type,
+            published_at: new Date().toISOString(),
+            content_id: derivative_id,
+            message: `Successfully published to ${platform_type}`
+          }
+        }
+      } else {
+        // Simulate failure
+        return reply.status(400).send({
+          success: false,
+          error: `Failed to publish to ${platform_type}: Simulated platform error`
+        })
+      }
+
+    } catch (error) {
+      fastify.log.error(error)
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to publish content'
+      })
+    }
+  })
 }
 
 export default platformRoutes

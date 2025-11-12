@@ -200,7 +200,7 @@ export default function MultiPlatformPublisherPage() {
     
     toast({
       title: 'Tạo thành công',
-      description: `Đã tạo ${newDerivatives.length} derivatives cho các platform.`
+      description: `Đã tạo ${newDerivatives.length} nội dung cho các platform.`
     })
   }
 
@@ -272,7 +272,7 @@ export default function MultiPlatformPublisherPage() {
               Nội dung gốc
             </CardTitle>
             <CardDescription>
-              {sourceData ? 'Nội dung từ Derivatives page' : 'Nhập nội dung để tạo derivatives cho các platform'}
+              {sourceData ? 'Nội dung từ trang Nội dung cho các Platform' : 'Nhập nội dung để tạo nội dung cho các platform'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -288,7 +288,7 @@ export default function MultiPlatformPublisherPage() {
                   <Button
                     variant="outline"
                     onClick={() => router.push(`/derivatives?pack_id=${searchParams.get('pack_id')}`)}>
-                    ← Quay lại Derivatives
+                    ← Quay lại Nội dung cho các Platform
                   </Button>
                 )}
               </div>
@@ -303,7 +303,7 @@ export default function MultiPlatformPublisherPage() {
                   className="gap-2"
                 >
                   <Sparkles className="h-4 w-4" />
-                  {isGenerating ? 'Đang tạo...' : sourceData ? 'Tạo thêm Derivatives' : 'Tạo Derivatives'}
+                  {isGenerating ? 'Đang tạo...' : sourceData ? 'Tạo thêm Nội dung' : 'Tạo Nội dung'}
                 </Button>
               </div>
             </div>
@@ -314,7 +314,7 @@ export default function MultiPlatformPublisherPage() {
         {platforms.some(p => p.content) && (
           <Card>
             <CardHeader>
-              <CardTitle>Derivatives theo Platform</CardTitle>
+              <CardTitle>Nội dung cho các Platform</CardTitle>
               <CardDescription>
                 Chỉnh sửa nội dung cho từng nền tảng
               </CardDescription>

@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/derivative-tabs'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SchedulingModal } from '@/components/ui/scheduling-modal'
+import { ContentPackSelector } from '@/components/ui/content-pack-selector'
 
 const API_URL = 'http://localhost:4000'
 
@@ -141,13 +142,9 @@ export default function DerivativesPage() {
         
         // Build platform configs array from configured and default platforms
         const availablePlatforms: PlatformConfig[] = []
+        const configuredPlatformNames = new Set<string>()
         
-        // Add default social platforms (always available)
-        defaultPlatformConfigs.forEach(defaultPlatform => {
-          availablePlatforms.push(defaultPlatform)
-        })
-        
-        // Add configured Email/CMS platforms
+        // First, add configured platforms (Email/CMS and any configured social platforms)
         configResult.data.forEach((config: ConfiguredPlatform) => {
           if (config.is_active && config.is_connected) {
             const supportedPlatform = supportedResult.data.all.find(
@@ -160,7 +157,15 @@ export default function DerivativesPage() {
                 characterLimit: supportedPlatform.capabilities.maxContentLength,
                 content: ''
               })
+              configuredPlatformNames.add(supportedPlatform.name)
             }
+          }
+        })
+        
+        // Then, add default social platforms that are NOT already configured
+        defaultPlatformConfigs.forEach(defaultPlatform => {
+          if (!configuredPlatformNames.has(defaultPlatform.platform)) {
+            availablePlatforms.push(defaultPlatform)
           }
         })
         
@@ -497,16 +502,16 @@ export default function DerivativesPage() {
 
   return (
     <AppLayout
-      pageTitle="Derivatives"
+      pageTitle="Nội dung theo các Platform"
       breadcrumbs={[
         { label: 'Dashboard', href: '/' },
-        { label: 'Derivatives' },
+        { label: 'Nội dung theo các Platform' },
       ]}
     >
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">Derivatives</h1>
+            <h1 className="text-2xl font-bold">Nội dung theo các Platform</h1>
             <p className="text-muted-foreground">
               Tạo và quản lý các biến thể nội dung từ content packs đã được duyệt
             </p>
@@ -607,36 +612,6 @@ export default function DerivativesPage() {
               </CardContent>
             </Card>
 
-            {/* Platform Configuration Notice */}
-            {!hasConfiguredEmailOrCMSPlatforms() && (
-              <Card className="border-blue-200 bg-blue-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-blue-700">
-                    <Mail className="h-5 w-5" />
-                    Mở rộng Platforms
-                  </CardTitle>
-                  <CardDescription className="text-blue-600">
-                    Thêm Email Marketing và CMS platforms để tăng tối đa phạm vi phân phối nội dung
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-sm text-blue-700">
-                      Hiện tại bạn chỉ có thể tạo derivatives cho các social media platforms. 
-                      Cấu hình thêm MailChimp và WordPress để xuất bản email campaigns và blog posts.
-                    </p>
-                    <Button
-                      onClick={() => router.push('/settings/platforms')}
-                      variant="outline"
-                      className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Cấu hình Platforms
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             {/* Derivatives Section */}
             <Card>
@@ -645,7 +620,7 @@ export default function DerivativesPage() {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Share2 className="h-5 w-5" />
-                      Platform Derivatives
+                      Nội dung cho các Platform
                     </CardTitle>
                     <CardDescription>
                       Tạo và chỉnh sửa nội dung cho từng platform
@@ -658,7 +633,16 @@ export default function DerivativesPage() {
                       className="flex items-center gap-2"
                     >
                       <Sparkles className="h-4 w-4" />
-                      {generating ? 'Đang tạo...' : 'Tạo Derivatives'}
+                      {generating ? 'Đang tạo...' : 'Tạo Nội dung'}
+                    </Button>
+                    <Button
+                      onClick={() => router.push('/settings/platforms')}
+                      variant="outline"
+                      disabled={generating}
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Cấu hình Platforms
                     </Button>
                     <Button
                       onClick={fetchPlatformData}
@@ -824,7 +808,7 @@ export default function DerivativesPage() {
                             <div className="p-4 bg-muted rounded-lg whitespace-pre-wrap">
                               {getCurrentContent(config.platform) || 
                                 <span className="text-muted-foreground italic">
-                                  Chưa có nội dung. Nhấn "Tạo Derivatives" để bắt đầu.
+                                  Chưa có nội dung. Nhấn "Tạo Nội dung" để bắt đầu.
                                 </span>
                               }
                             </div>
@@ -877,7 +861,7 @@ export default function DerivativesPage() {
                       </div>
                     ) : (
                       <p className="text-muted-foreground">
-                        Chưa có derivatives nào. Nhấn nút "Tạo Derivatives" để bắt đầu.
+                        Chưa có nội dung nào. Nhấn nút "Tạo Nội dung" để bắt đầu.
                         <br />
                         <span className="text-sm">
                           {platforms.length} platform đã sẵn sàng: {platforms.map(p => p.platform).join(', ')}
@@ -937,30 +921,13 @@ export default function DerivativesPage() {
             </div>
           </>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Chọn Content Pack</CardTitle>
-              <CardDescription>
-                Vui lòng chọn một content pack đã được duyệt để tạo derivatives
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Bạn cần có content pack đã được duyệt để tạo derivatives cho các platform khác nhau.
-                </p>
-                <Button
-                  onClick={() => router.push('/test-packs-draft')}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Package className="h-4 w-4" />
-                  Xem Content Packs
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ContentPackSelector
+            onSelectPack={(packId) => {
+              setSelectedPackId(packId)
+              fetchPack(packId)
+            }}
+            selectedPackId={selectedPackId}
+          />
         )}
         
         {/* Scheduling Modal */}

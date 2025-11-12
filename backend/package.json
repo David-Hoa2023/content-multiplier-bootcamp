@@ -18,10 +18,13 @@
     "@google/generative-ai": "^0.24.1",
     "@types/multer": "^2.0.0",
     "ajv": "^8.17.1",
+    "docx": "^9.5.1",
     "dotenv": "^16.3.1",
     "fastify": "^4.25.2",
+    "mammoth": "^1.11.0",
     "multer": "^2.0.2",
     "openai": "^6.7.0",
+    "pdf-parse": "^2.4.5",
     "pg": "^8.11.3"
   },
   "devDependencies": {
