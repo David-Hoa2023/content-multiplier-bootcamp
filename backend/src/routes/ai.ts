@@ -1,0 +1,224 @@
+import { FastifyInstance } from 'fastify';
+import {
+  generateContent,
+  getAvailableProviders,
+  getAvailableModels,
+  AIProvider,
+} from '../services/aiService';
+
+export async function aiRoutes(fastify: FastifyInstance) {
+  // GET available AI providers
+  fastify.get('/ai/providers', async (request, reply) => {
+    try {
+      const providers = getAvailableProviders();
+      return {
+        success: true,
+        data: providers,
+        message:
+          providers.length === 0
+            ? 'No AI providers configured. Please add API keys to .env file.'
+            : `${providers.length} provider(s) available`,
+      };
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      reply.status(500).send({ success: false, error: 'Failed to fetch providers' });
+    }
+  });
+
+  // GET available models for a provider
+  fastify.get<{ Params: { provider: string } }>(
+    '/ai/providers/:provider/models',
+    async (request, reply) => {
+      try {
+        const { provider } = request.params;
+        const models = getAvailableModels(provider as AIProvider);
+
+        if (models.length === 0) {
+          return reply.status(404).send({
+            success: false,
+            error: `Unknown provider: ${provider}`,
+          });
+        }
+
+        return {
+          success: true,
+          data: models,
+          provider,
+        };
+      } catch (error) {
+        console.error('Error fetching models:', error);
+        reply.status(500).send({ success: false, error: 'Failed to fetch models' });
+      }
+    }
+  );
+
+  // POST generate content
+  fastify.post<{
+    Body: {
+      prompt: string;
+      provider: AIProvider;
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+    };
+  }>('/ai/generate', async (request, reply) => {
+    try {
+      const { prompt, provider, model, temperature, maxTokens } = request.body;
+
+      // Validation
+      if (!prompt || !prompt.trim()) {
+        return reply.status(400).send({
+          success: false,
+          error: 'Prompt is required',
+        });
+      }
+
+      if (!provider) {
+        return reply.status(400).send({
+          success: false,
+          error: 'Provider is required',
+        });
+      }
+
+      const availableProviders = getAvailableProviders();
+      if (!availableProviders.includes(provider)) {
+        return reply.status(400).send({
+          success: false,
+          error: `Provider '${provider}' is not available or not configured`,
+          availableProviders,
+        });
+      }
+
+      // Temperature validation
+      if (temperature !== undefined && (temperature < 0 || temperature > 2)) {
+        return reply.status(400).send({
+          success: false,
+          error: 'Temperature must be between 0 and 2',
+        });
+      }
+
+      // Generate content
+      const startTime = Date.now();
+      const result = await generateContent({
+        prompt,
+        provider,
+        model,
+        temperature,
+        maxTokens,
+      });
+
+      const duration = Date.now() - startTime;
+
+      if (!result.success) {
+        return reply.status(500).send({
+          success: false,
+          error: result.error,
+          provider: result.provider,
+          model: result.model,
+        });
+      }
+
+      return {
+        success: true,
+        data: {
+          content: result.content,
+          provider: result.provider,
+          model: result.model,
+          tokensUsed: result.tokensUsed,
+          duration: `${duration}ms`,
+        },
+      };
+    } catch (error) {
+      console.error('Error generating content:', error);
+      reply.status(500).send({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to generate content',
+      });
+    }
+  });
+
+  // POST generate idea content - Convenience endpoint
+  fastify.post<{
+    Body: {
+      title: string;
+      persona?: string;
+      industry?: string;
+      provider?: AIProvider;
+      model?: string;
+      temperature?: number;
+    };
+  }>('/ai/generate-idea', async (request, reply) => {
+    try {
+      const { title, persona, industry, provider, model, temperature } = request.body;
+
+      if (!title || !title.trim()) {
+        return reply.status(400).send({
+          success: false,
+          error: 'Title is required',
+        });
+      }
+
+      // Auto-select provider if not provided or not available
+      const availableProviders = getAvailableProviders();
+      if (availableProviders.length === 0) {
+        return reply.status(400).send({
+          success: false,
+          error: 'No AI providers configured. Please add at least one API key to .env file.',
+        });
+      }
+
+      // Priority order: openai -> deepseek -> gemini -> anthropic
+      const priorityOrder: AIProvider[] = ['openai', 'deepseek', 'gemini', 'anthropic'];
+      const requestedProvider = provider || 'openai';
+      let selectedProvider = requestedProvider;
+
+      if (!availableProviders.includes(requestedProvider)) {
+        selectedProvider = priorityOrder.find(p => availableProviders.includes(p)) || availableProviders[0];
+        console.log(`⚠️ Provider '${requestedProvider}' not available. Auto-selecting '${selectedProvider}'`);
+      }
+
+      // Build prompt for idea generation
+      let prompt = `Generate a detailed content idea description for the following:\n\n`;
+      prompt += `Title: ${title}\n`;
+      if (persona) prompt += `Target Persona: ${persona}\n`;
+      if (industry) prompt += `Industry: ${industry}\n`;
+      prompt += `\nPlease provide:\n`;
+      prompt += `1. A compelling description (2-3 sentences)\n`;
+      prompt += `2. Key talking points or content pillars\n`;
+      prompt += `3. Suggested content format or approach\n`;
+      prompt += `\nKeep it concise and actionable.`;
+
+      const result = await generateContent({
+        prompt,
+        provider: selectedProvider,
+        model,
+        temperature: temperature || 0.7,
+        maxTokens: 500,
+      });
+
+      if (!result.success) {
+        return reply.status(500).send({
+          success: false,
+          error: result.error,
+        });
+      }
+
+      return {
+        success: true,
+        data: {
+          description: result.content,
+          provider: result.provider,
+          model: result.model,
+        },
+        requestedProvider: requestedProvider,
+        usedProvider: selectedProvider,
+      };
+    } catch (error) {
+      console.error('Error generating idea:', error);
+      reply.status(500).send({
+        success: false,
+        error: 'Failed to generate idea content',
+      });
+    }
+  });
+}

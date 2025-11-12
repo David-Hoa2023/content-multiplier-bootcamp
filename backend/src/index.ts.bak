@@ -1,0 +1,44 @@
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import dotenv from 'dotenv';
+import { ideaRoutes } from './routes/ideas';
+import pool from './db';
+
+dotenv.config();
+
+const fastify = Fastify({
+  logger: true,
+});
+
+const PORT = parseInt(process.env.PORT || '4000', 10);
+
+async function start() {
+  try {
+    // Register CORS
+    await fastify.register(cors, {
+      origin: true, // Allow all origins in development
+      credentials: true,
+    });
+
+    // Health check endpoint
+    fastify.get('/health', async () => {
+      return { status: 'ok', timestamp: new Date().toISOString() };
+    });
+
+    // Register routes
+    await fastify.register(ideaRoutes);
+
+    // Test database connection
+    await pool.query('SELECT NOW()');
+    console.log('✅ Database connection successful');
+
+    // Start server
+    await fastify.listen({ port: PORT, host: '0.0.0.0' });
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  } catch (error) {
+    console.error('❌ Error starting server:', error);
+    process.exit(1);
+  }
+}
+
+start();
