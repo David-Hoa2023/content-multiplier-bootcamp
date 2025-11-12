@@ -7,6 +7,8 @@ import { contentPlanRoutes } from './routes/contentPlans';
 import { packRoutes } from './routes/packs';
 import { documentRoutes } from './routes/documents';
 import { briefRoutes } from './routes/briefs';
+import derivativesRoutes from './routes/derivatives';
+import platformRoutes from './routes/platforms';
 import { getAvailableProviders } from './services/aiService';
 import pool from './db';
 
@@ -38,6 +40,8 @@ async function start() {
     await fastify.register(packRoutes);
     await fastify.register(documentRoutes);
     await fastify.register(briefRoutes);
+    await fastify.register(derivativesRoutes);
+    await fastify.register(platformRoutes);
 
     // Test database connection (non-blocking)
     try {

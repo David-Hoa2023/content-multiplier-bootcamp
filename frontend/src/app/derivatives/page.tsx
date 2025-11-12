@@ -1,15 +1,38 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Share2, Package, ArrowRight, Loader2, FileText } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { 
+  Share2, 
+  Package, 
+  ArrowRight, 
+  Loader2, 
+  FileText, 
+  Sparkles,
+  Copy,
+  Edit,
+  Calendar,
+  Send,
+  Hash,
+  AtSign,
+  BarChart3,
+  Mail,
+  Settings
+} from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { DraftEditor } from '@/components/ui/draft-editor'
+import { Textarea } from '@/components/ui/textarea'
+import { 
+  DerivativeTabs, 
+  type Platform, 
+  type PlatformConfig 
+} from '@/components/ui/derivative-tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SchedulingModal } from '@/components/ui/scheduling-modal'
 
 const API_URL = 'http://localhost:4000'
 
@@ -24,24 +47,171 @@ interface ContentPack {
   updated_at: string
 }
 
+interface ContentPlan {
+  id: number
+  idea_id: number
+  plan_content: string
+  target_audience: string
+  key_points: string
+  created_at: string
+}
+
+interface Derivative {
+  id?: number
+  pack_id: string
+  content_plan_id?: number
+  platform: string
+  content: string
+  character_count?: number
+  hashtags?: string[]
+  mentions?: string[]
+  status?: string
+  scheduled_at?: string
+}
+
+interface ConfiguredPlatform {
+  id: number
+  platform_type: string
+  platform_name: string
+  configuration: Record<string, any>
+  is_active: boolean
+  is_connected: boolean
+}
+
+interface SupportedPlatform {
+  type: string
+  name: string
+  capabilities: {
+    supportsScheduling: boolean
+    supportsImages: boolean
+    supportsVideos: boolean
+    supportsHashtags: boolean
+    supportsMentions: boolean
+    supportsThreads: boolean
+    maxContentLength: number
+    imageFormats?: string[]
+    videoFormats?: string[]
+  }
+}
+
+const defaultPlatformConfigs: PlatformConfig[] = [
+  { platform: 'Twitter', characterLimit: 280, content: '' },
+  { platform: 'LinkedIn', characterLimit: 3000, content: '' },
+  { platform: 'Facebook', characterLimit: 5000, content: '' },
+  { platform: 'Instagram', characterLimit: 2200, content: '' },
+  { platform: 'TikTok', characterLimit: 300, content: '' }
+]
+
 export default function DerivativesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  
   const [selectedPackId, setSelectedPackId] = useState<string>('')
   const [selectedPack, setSelectedPack] = useState<ContentPack | null>(null)
+  const [contentPlan, setContentPlan] = useState<ContentPlan | null>(null)
+  const [derivatives, setDerivatives] = useState<Derivative[]>([])
+  const [platforms, setPlatforms] = useState<PlatformConfig[]>([])
+  const [configuredPlatforms, setConfiguredPlatforms] = useState<ConfiguredPlatform[]>([])
+  const [supportedPlatforms, setSupportedPlatforms] = useState<SupportedPlatform[]>([])
+  const [activePlatform, setActivePlatform] = useState<Platform>('Twitter')
   const [loading, setLoading] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({})
+  const [schedulingModalOpen, setSchedulingModalOpen] = useState(false)
+  const [scheduling, setScheduling] = useState(false)
 
+  // Fetch platform configurations and supported platforms
+  const fetchPlatformData = async () => {
+    try {
+      // Fetch configured platforms
+      const configResponse = await fetch(`${API_URL}/platforms/configurations`)
+      const configResult = await configResponse.json()
+      
+      if (configResult.success) {
+        setConfiguredPlatforms(configResult.data)
+      }
+
+      // Fetch supported platforms
+      const supportedResponse = await fetch(`${API_URL}/platforms/supported`)
+      const supportedResult = await supportedResponse.json()
+      
+      if (supportedResult.success) {
+        setSupportedPlatforms(supportedResult.data.all)
+        
+        // Build platform configs array from configured and default platforms
+        const availablePlatforms: PlatformConfig[] = []
+        
+        // Add default social platforms (always available)
+        defaultPlatformConfigs.forEach(defaultPlatform => {
+          availablePlatforms.push(defaultPlatform)
+        })
+        
+        // Add configured Email/CMS platforms
+        configResult.data.forEach((config: ConfiguredPlatform) => {
+          if (config.is_active && config.is_connected) {
+            const supportedPlatform = supportedResult.data.all.find(
+              (sp: SupportedPlatform) => sp.type === config.platform_type
+            )
+            
+            if (supportedPlatform) {
+              availablePlatforms.push({
+                platform: supportedPlatform.name,
+                characterLimit: supportedPlatform.capabilities.maxContentLength,
+                content: ''
+              })
+            }
+          }
+        })
+        
+        setPlatforms(availablePlatforms)
+      }
+    } catch (error) {
+      console.error('Error fetching platform data:', error)
+      // Fallback to default platforms if API fails
+      setPlatforms(defaultPlatformConfigs)
+    }
+  }
+
+  // Fetch pack and related data
   const fetchPack = async (packId: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_URL}/api/packs/${packId}`)
-      const result = await response.json()
+      
+      // Fetch pack data
+      const packResponse = await fetch(`${API_URL}/api/packs/${packId}`)
+      const packResult = await packResponse.json()
 
-      if (result.success) {
-        setSelectedPack(result.data)
+      if (packResult.success) {
+        setSelectedPack(packResult.data)
+        
+        // Fetch related content plan if available
+        if (packResult.data.brief_id) {
+          const planResponse = await fetch(`${API_URL}/content-plans/idea/${packResult.data.brief_id}`)
+          const planResult = await planResponse.json()
+          if (planResult.success && planResult.data.length > 0) {
+            setContentPlan(planResult.data[0])
+          }
+        }
+        
+        // Fetch existing derivatives
+        const derivativesResponse = await fetch(`${API_URL}/derivatives/pack/${packId}`)
+        const derivativesResult = await derivativesResponse.json()
+        
+        if (derivativesResult.success && derivativesResult.data.length > 0) {
+          setDerivatives(derivativesResult.data)
+          
+          // Update platforms with existing content
+          const updatedPlatforms = platforms.map(p => {
+            const existing = derivativesResult.data.find((d: Derivative) => 
+              d.platform.toLowerCase() === p.platform.toLowerCase()
+            )
+            return existing ? { ...p, content: existing.content } : p
+          })
+          setPlatforms(updatedPlatforms)
+        }
       } else {
-        throw new Error(result.error || 'Failed to fetch pack')
+        throw new Error(packResult.error || 'Failed to fetch pack')
       }
     } catch (error) {
       console.error('Error fetching pack:', error)
@@ -55,15 +225,275 @@ export default function DerivativesPage() {
     }
   }
 
+  // Generate derivatives using AI
+  const generateDerivatives = async () => {
+    if (!selectedPack) return
+    
+    setGenerating(true)
+    
+    try {
+      const response = await fetch(`${API_URL}/derivatives/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pack_id: selectedPackId,
+          content_plan_id: contentPlan?.id,
+          original_content: selectedPack.draft_content,
+          platforms: platforms.map(p => ({
+            platform: p.platform,
+            character_limit: p.characterLimit
+          }))
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setDerivatives(result.data)
+        
+        // Update platforms with generated content
+        const updatedPlatforms = platforms.map(p => {
+          const generated = result.data.find((d: Derivative) => 
+            d.platform.toLowerCase() === p.platform.toLowerCase()
+          )
+          return generated ? { ...p, content: generated.content } : p
+        })
+        setPlatforms(updatedPlatforms)
+        
+        toast({
+          title: 'Thành công',
+          description: `Đã tạo ${result.data.length} derivatives cho các platform`
+        })
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error('Error generating derivatives:', error)
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tạo derivatives',
+        variant: 'destructive'
+      })
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // Update derivative content
+  const updateDerivative = async (platform: Platform, newContent: string) => {
+    const derivative = derivatives.find(d => d.platform === platform)
+    if (!derivative?.id) return
+    
+    try {
+      const response = await fetch(`${API_URL}/derivatives/${derivative.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newContent })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // Update local state
+        setDerivatives(prev => prev.map(d => 
+          d.id === derivative.id ? result.data : d
+        ))
+        setPlatforms(prev => prev.map(p => 
+          p.platform === platform ? { ...p, content: newContent } : p
+        ))
+        
+        toast({
+          title: 'Đã lưu',
+          description: `Nội dung ${platform} đã được cập nhật`
+        })
+      }
+    } catch (error) {
+      console.error('Error updating derivative:', error)
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể cập nhật nội dung',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Schedule derivatives for publishing
+  const handleSchedulePublishing = async (scheduleData: any[]) => {
+    try {
+      setScheduling(true)
+      
+      const derivative_ids = scheduleData.map(item => item.derivative_id)
+      const scheduled_times = scheduleData.map(item => item.scheduled_time)
+      
+      const response = await fetch(`${API_URL}/derivatives/schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          derivative_ids,
+          scheduled_times
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // Update derivatives status to scheduled
+        setDerivatives(prev => prev.map(d => {
+          const isScheduled = derivative_ids.includes(d.id)
+          return isScheduled ? { ...d, status: 'scheduled' } : d
+        }))
+        
+        toast({
+          title: 'Thành công',
+          description: `Đã lên lịch ${derivative_ids.length} nội dung để xuất bản`
+        })
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error('Error scheduling derivatives:', error)
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể lên lịch xuất bản. Vui lòng thử lại.',
+        variant: 'destructive'
+      })
+    } finally {
+      setScheduling(false)
+    }
+  }
+
+  // Publish derivatives to real platforms
+  const publishToRealPlatforms = async (selectedDerivatives: number[]) => {
+    if (selectedDerivatives.length === 0) {
+      toast({
+        title: 'Không có nội dung nào được chọn',
+        description: 'Vui lòng chọn ít nhất một nội dung để xuất bản.',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      setScheduling(true)
+      let publishedCount = 0
+      let failedCount = 0
+      
+      for (const derivativeId of selectedDerivatives) {
+        const derivative = derivatives.find(d => d.id === derivativeId)
+        if (!derivative) continue
+
+        // Find platform configuration for this derivative
+        const platformConfig = configuredPlatforms.find(config => 
+          config.platform_type.toLowerCase() === derivative.platform.toLowerCase() ||
+          supportedPlatforms.find(sp => sp.name === derivative.platform)?.type === config.platform_type
+        )
+
+        try {
+          const response = await fetch(`${API_URL}/platforms/publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              platform_config_id: platformConfig?.id,
+              platform_type: platformConfig?.platform_type || derivative.platform.toLowerCase(),
+              content: derivative.content,
+              derivative_id: derivative.id,
+              scheduled_time: null // Immediate publishing
+            })
+          })
+
+          const result = await response.json()
+          
+          if (result.success) {
+            publishedCount++
+            // Update derivative status to published
+            setDerivatives(prev => prev.map(d => 
+              d.id === derivativeId ? { ...d, status: 'published' } : d
+            ))
+          } else {
+            failedCount++
+            console.error(`Failed to publish to ${derivative.platform}:`, result.error)
+          }
+        } catch (error) {
+          failedCount++
+          console.error(`Error publishing to ${derivative.platform}:`, error)
+        }
+      }
+
+      if (publishedCount > 0) {
+        toast({
+          title: 'Xuất bản thành công',
+          description: `Đã xuất bản ${publishedCount} nội dung${failedCount > 0 ? `, ${failedCount} thất bại` : ''}.`
+        })
+      } else if (failedCount > 0) {
+        toast({
+          title: 'Xuất bản thất bại',
+          description: `Không thể xuất bản ${failedCount} nội dung. Vui lòng kiểm tra cấu hình platform.`,
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      console.error('Error publishing derivatives:', error)
+      toast({
+        title: 'Lỗi xuất bản',
+        description: 'Có lỗi xảy ra trong quá trình xuất bản. Vui lòng thử lại.',
+        variant: 'destructive'
+      })
+    } finally {
+      setScheduling(false)
+    }
+  }
+
+  // Navigate to Multi-platform Publisher
+  const openInPublisher = () => {
+    // Pass derivatives data to publisher
+    const params = new URLSearchParams({
+      pack_id: selectedPackId,
+      from: 'derivatives'
+    })
+    
+    // Store derivatives in sessionStorage for publisher to retrieve
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('derivatives_data', JSON.stringify({
+        pack: selectedPack,
+        plan: contentPlan,
+        derivatives: platforms
+      }))
+    }
+    
+    router.push(`/multi-platform-publisher?${params.toString()}`)
+  }
+
   useEffect(() => {
-    // Check if pack_id is in URL params
+    // Fetch platform data on component mount
+    fetchPlatformData()
+    
     const packIdFromUrl = searchParams.get('pack_id')
     if (packIdFromUrl) {
       setSelectedPackId(packIdFromUrl)
       fetchPack(packIdFromUrl)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
+
+  const getCurrentContent = (platform: Platform): string => {
+    return platforms.find(p => p.platform === platform)?.content || ''
+  }
+
+  const getDerivativeStats = (platform: Platform) => {
+    const derivative = derivatives.find(d => d.platform === platform)
+    return {
+      hashtags: derivative?.hashtags || [],
+      mentions: derivative?.mentions || [],
+      characterCount: derivative?.character_count || 0
+    }
+  }
+
+  const hasConfiguredEmailOrCMSPlatforms = () => {
+    return configuredPlatforms.some(config => 
+      config.is_active && 
+      config.is_connected && 
+      (config.platform_type === 'mailchimp' || config.platform_type === 'wordpress')
+    )
+  }
 
   return (
     <AppLayout
@@ -74,11 +504,22 @@ export default function DerivativesPage() {
       ]}
     >
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Derivatives</h1>
-          <p className="text-muted-foreground">
-            Tạo và quản lý các biến thể nội dung từ content packs đã được duyệt
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Derivatives</h1>
+            <p className="text-muted-foreground">
+              Tạo và quản lý các biến thể nội dung từ content packs đã được duyệt
+            </p>
+          </div>
+          {selectedPack && derivatives.length > 0 && (
+            <Button
+              onClick={openInPublisher}
+              className="flex items-center gap-2"
+            >
+              <Send className="h-4 w-4" />
+              Mở trong Publisher
+            </Button>
+          )}
         </div>
 
         {loading ? (
@@ -96,11 +537,8 @@ export default function DerivativesPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Content Pack đã duyệt
+                  Content Pack Information
                 </CardTitle>
-                <CardDescription>
-                  Nội dung đã được duyệt và sẵn sàng để tạo derivatives
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -114,7 +552,7 @@ export default function DerivativesPage() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Trạng thái:</span>
-                    <Badge>{selectedPack.status}</Badge>
+                    <Badge className="ml-2">{selectedPack.status}</Badge>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Cập nhật:</span>
@@ -126,10 +564,36 @@ export default function DerivativesPage() {
               </CardContent>
             </Card>
 
-            {/* Approved Content */}
+            {/* Content Plan Summary (if available) */}
+            {contentPlan && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Plan Overview</CardTitle>
+                  <CardDescription>
+                    Thông tin từ kế hoạch nội dung
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                      Đối tượng mục tiêu
+                    </h4>
+                    <p className="text-sm">{contentPlan.target_audience}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                      Điểm chính
+                    </h4>
+                    <p className="text-sm">{contentPlan.key_points}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Original Content */}
             <Card>
               <CardHeader>
-                <CardTitle>Nội dung đã duyệt</CardTitle>
+                <CardTitle>Nội dung gốc</CardTitle>
                 <CardDescription>
                   Nội dung đã được duyệt từ bước review
                 </CardDescription>
@@ -143,47 +607,347 @@ export default function DerivativesPage() {
               </CardContent>
             </Card>
 
+            {/* Platform Configuration Notice */}
+            {!hasConfiguredEmailOrCMSPlatforms() && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-blue-700">
+                    <Mail className="h-5 w-5" />
+                    Mở rộng Platforms
+                  </CardTitle>
+                  <CardDescription className="text-blue-600">
+                    Thêm Email Marketing và CMS platforms để tăng tối đa phạm vi phân phối nội dung
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <p className="text-sm text-blue-700">
+                      Hiện tại bạn chỉ có thể tạo derivatives cho các social media platforms. 
+                      Cấu hình thêm MailChimp và WordPress để xuất bản email campaigns và blog posts.
+                    </p>
+                    <Button
+                      onClick={() => router.push('/settings/platforms')}
+                      variant="outline"
+                      className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Cấu hình Platforms
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Derivatives Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Share2 className="h-5 w-5" />
-                  Biến thể nội dung
-                </CardTitle>
-                <CardDescription>
-                  Tạo các phiên bản khác nhau của nội dung cho các nền tảng khác nhau
-                </CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Share2 className="h-5 w-5" />
+                      Platform Derivatives
+                    </CardTitle>
+                    <CardDescription>
+                      Tạo và chỉnh sửa nội dung cho từng platform
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={generateDerivatives}
+                      disabled={generating || platforms.length === 0}
+                      className="flex items-center gap-2"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {generating ? 'Đang tạo...' : 'Tạo Derivatives'}
+                    </Button>
+                    <Button
+                      onClick={fetchPlatformData}
+                      variant="outline"
+                      disabled={generating}
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Làm mới Platforms
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Tính năng tạo derivatives đang được phát triển. Vui lòng quay lại sau.
-                  </p>
+                {derivatives.length > 0 ? (
+                  <Tabs defaultValue={activePlatform} onValueChange={(v) => setActivePlatform(v as Platform)}>
+                    <TabsList className={`grid w-full ${platforms.length <= 5 ? `grid-cols-${platforms.length}` : 'grid-cols-5'}`}>
+                      {platforms.map(p => (
+                        <TabsTrigger key={p.platform} value={p.platform}>
+                          {p.platform}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                    
+                    {platforms.map(config => {
+                      const stats = getDerivativeStats(config.platform)
+                      const isEditing = editMode[config.platform]
+                      
+                      return (
+                        <TabsContent key={config.platform} value={config.platform} className="space-y-4">
+                          {/* Platform Stats */}
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1">
+                                <BarChart3 className="h-4 w-4" />
+                                <span>{stats.characterCount}/{config.characterLimit} ký tự</span>
+                              </div>
+                              {stats.hashtags.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <Hash className="h-4 w-4" />
+                                  <span>{stats.hashtags.length} hashtags</span>
+                                </div>
+                              )}
+                              {stats.mentions.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <AtSign className="h-4 w-4" />
+                                  <span>{stats.mentions.length} mentions</span>
+                                </div>
+                              )}
+                              {/* Status Badges */}
+                              {(() => {
+                                const derivative = derivatives.find(d => d.platform === config.platform)
+                                if (derivative?.status === 'published') {
+                                  return (
+                                    <Badge variant="outline" className="text-green-600">
+                                      <Send className="h-3 w-3 mr-1" />
+                                      Đã xuất bản
+                                    </Badge>
+                                  )
+                                } else if (derivative?.status === 'scheduled') {
+                                  return (
+                                    <Badge variant="outline" className="text-blue-600">
+                                      <Calendar className="h-3 w-3 mr-1" />
+                                      Đã lên lịch
+                                    </Badge>
+                                  )
+                                }
+                                return null
+                              })()}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(getCurrentContent(config.platform))
+                                  toast({
+                                    title: 'Đã sao chép',
+                                    description: `Nội dung ${config.platform} đã được sao chép`
+                                  })
+                                }}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditMode(prev => ({
+                                  ...prev,
+                                  [config.platform]: !prev[config.platform]
+                                }))}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              {(() => {
+                                const derivative = derivatives.find(d => d.platform === config.platform)
+                                const hasValidConfig = configuredPlatforms.some(cp => 
+                                  cp.is_active && cp.is_connected && 
+                                  (cp.platform_type.toLowerCase() === config.platform.toLowerCase() ||
+                                   supportedPlatforms.find(sp => sp.name === config.platform)?.type === cp.platform_type)
+                                )
+                                
+                                if (derivative?.id && derivative.status !== 'published' && (hasValidConfig || ['Twitter', 'LinkedIn', 'Facebook', 'Instagram', 'TikTok'].includes(config.platform))) {
+                                  return (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => publishToRealPlatforms([derivative.id!])}
+                                      disabled={scheduling}
+                                      className="text-green-600 hover:text-green-700"
+                                    >
+                                      <Send className="h-4 w-4" />
+                                    </Button>
+                                  )
+                                }
+                                return null
+                              })()}
+                            </div>
+                          </div>
+                          
+                          {/* Content Editor/Viewer */}
+                          {isEditing ? (
+                            <div className="space-y-2">
+                              <Textarea
+                                value={getCurrentContent(config.platform)}
+                                onChange={(e) => {
+                                  setPlatforms(prev => prev.map(p =>
+                                    p.platform === config.platform 
+                                      ? { ...p, content: e.target.value }
+                                      : p
+                                  ))
+                                }}
+                                placeholder={`Nhập nội dung cho ${config.platform}...`}
+                                className="min-h-[200px]"
+                                maxLength={config.characterLimit}
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setEditMode(prev => ({
+                                    ...prev,
+                                    [config.platform]: false
+                                  }))}
+                                >
+                                  Hủy
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    updateDerivative(config.platform, getCurrentContent(config.platform))
+                                    setEditMode(prev => ({
+                                      ...prev,
+                                      [config.platform]: false
+                                    }))
+                                  }}
+                                >
+                                  Lưu
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-4 bg-muted rounded-lg whitespace-pre-wrap">
+                              {getCurrentContent(config.platform) || 
+                                <span className="text-muted-foreground italic">
+                                  Chưa có nội dung. Nhấn "Tạo Derivatives" để bắt đầu.
+                                </span>
+                              }
+                            </div>
+                          )}
+                          
+                          {/* Hashtags and Mentions */}
+                          {(stats.hashtags.length > 0 || stats.mentions.length > 0) && (
+                            <div className="space-y-2">
+                              {stats.hashtags.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                  <Hash className="h-4 w-4 mt-1 text-muted-foreground" />
+                                  <div className="flex flex-wrap gap-1">
+                                    {stats.hashtags.map((tag, i) => (
+                                      <Badge key={i} variant="secondary">#{tag}</Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {stats.mentions.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                  <AtSign className="h-4 w-4 mt-1 text-muted-foreground" />
+                                  <div className="flex flex-wrap gap-1">
+                                    {stats.mentions.map((mention, i) => (
+                                      <Badge key={i} variant="secondary">@{mention}</Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </TabsContent>
+                      )
+                    })}
+                  </Tabs>
+                ) : (
+                  <div className="text-center py-8 space-y-4">
+                    {platforms.length === 0 ? (
+                      <div className="space-y-3">
+                        <p className="text-muted-foreground">
+                          Không có platform nào được cấu hình hoặc kết nối.
+                        </p>
+                        <Button
+                          onClick={() => router.push('/settings/platforms')}
+                          variant="outline"
+                          className="flex items-center gap-2"
+                        >
+                          <Settings className="h-4 w-4" />
+                          Cấu hình Platforms
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        Chưa có derivatives nào. Nhấn nút "Tạo Derivatives" để bắt đầu.
+                        <br />
+                        <span className="text-sm">
+                          {platforms.length} platform đã sẵn sàng: {platforms.map(p => p.platform).join(', ')}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between">
+              <Button
+                onClick={() => router.push('/test-packs-draft')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Package className="h-4 w-4" />
+                Quay lại Content Packs
+              </Button>
+              
+              {derivatives.length > 0 && (
+                <div className="flex gap-2">
                   <Button
-                    onClick={() => router.push('/test-packs-draft')}
+                    variant="outline"
+                    onClick={() => setSchedulingModalOpen(true)}
+                    disabled={scheduling}
+                    className="flex items-center gap-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    {scheduling ? 'Đang lên lịch...' : 'Lên lịch xuất bản'}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const publishableIds = derivatives.filter(d => 
+                        d.id && d.status !== 'published'
+                      ).map(d => d.id!)
+                      publishToRealPlatforms(publishableIds)
+                    }}
+                    disabled={scheduling}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                  >
+                    <Send className="h-4 w-4" />
+                    Xuất bản ngay
+                  </Button>
+                  <Button
+                    onClick={openInPublisher}
                     variant="outline"
                     className="flex items-center gap-2"
                   >
-                    <Package className="h-4 w-4" />
-                    Xem Content Packs
                     <ArrowRight className="h-4 w-4" />
+                    Multi-platform Publisher
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
           </>
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle>Biến thể nội dung</CardTitle>
+              <CardTitle>Chọn Content Pack</CardTitle>
               <CardDescription>
-                Tạo các phiên bản khác nhau của nội dung cho các nền tảng khác nhau
+                Vui lòng chọn một content pack đã được duyệt để tạo derivatives
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Tính năng tạo derivatives đang được phát triển. Vui lòng quay lại sau.
+                  Bạn cần có content pack đã được duyệt để tạo derivatives cho các platform khác nhau.
                 </p>
                 <Button
                   onClick={() => router.push('/test-packs-draft')}
@@ -198,8 +962,16 @@ export default function DerivativesPage() {
             </CardContent>
           </Card>
         )}
+        
+        {/* Scheduling Modal */}
+        <SchedulingModal
+          open={schedulingModalOpen}
+          onOpenChange={setSchedulingModalOpen}
+          derivatives={derivatives}
+          configuredPlatforms={configuredPlatforms}
+          onSchedule={handleSchedulePublishing}
+        />
       </div>
     </AppLayout>
   )
 }
-

@@ -1,6 +1,6 @@
-# 🎯 Idea Management App
+# 🎯 Idea Management App with Multi-Platform Distribution
 
-Ứng dụng quản lý ý tưởng nội dung đơn giản với Fastify backend (TypeScript), PostgreSQL database, và Next.js frontend.
+Ứng dụng quản lý ý tưởng nội dung toàn diện với Fastify backend (TypeScript), PostgreSQL database, Next.js frontend, và hệ thống tích hợp đa nền tảng phân phối nội dung.
 
 ## 📋 Tính năng
 
@@ -22,6 +22,22 @@
 - ✅ Xem chi tiết brief với markdown rendering
 - ✅ Xóa brief với icon dustbin
 - ✅ Copy content to clipboard
+
+### Multi-Platform Integration 🚀
+- ✅ **Hệ thống tích hợp đa nền tảng**: 7 platforms across 3 categories
+  - **Social Media**: Twitter, Facebook, LinkedIn, Instagram, TikTok
+  - **Email Marketing**: MailChimp  
+  - **Content Management**: WordPress
+- ✅ **Authentication System**: Platform-specific credential management với encryption
+- ✅ **Content Optimization**: Tự động format content cho từng platform (character limits, hashtags, etc.)
+- ✅ **Connection Testing**: Real-time credential validation
+- ✅ **Analytics**: Performance tracking và engagement metrics
+
+### Content Distribution
+- ✅ **Derivatives Generation**: Tạo nội dung tối ưu cho từng platform
+- ✅ **Scheduling System**: Lên lịch đăng tự động
+- ✅ **Platform Configuration**: Quản lý cấu hình từng platform
+- ✅ **Publishing Workflow**: Xuất bản đồng loạt lên multiple platforms
 
 ### Workflow
 - ✅ **Quy trình tạo nội dung**: Ideas → Briefs → Content Packs → Chỉnh sửa → Duyệt → Derivatives → Xuất bản
@@ -114,6 +130,23 @@ Backend sẽ chạy ở `http://localhost:4000`
 - `PUT /briefs/:id` - Cập nhật brief
 - `DELETE /briefs/:id` - Xóa brief
 
+**Platform Integration:**
+- `GET /platforms/supported` - List all supported platforms với capabilities
+- `GET /platforms/configurations` - Get user's platform configurations
+- `POST /platforms/configurations` - Create new platform configuration
+- `PUT /platforms/configurations/:id` - Update platform configuration
+- `DELETE /platforms/configurations/:id` - Delete platform configuration
+- `POST /platforms/test-connection` - Test platform credentials
+- `POST /platforms/configurations/:id/test` - Test existing configuration
+- `GET /platforms/analytics` - Get platform performance analytics
+
+**Content Distribution:**
+- `GET /derivatives` - List all content derivatives
+- `POST /derivatives` - Generate platform-specific content derivatives
+- `PUT /derivatives/:id` - Update derivative content
+- `POST /derivatives/:id/schedule` - Schedule content for publishing
+- `POST /derivatives/:id/publish` - Publish content immediately
+
 **Health:**
 - `GET /health` - Health check
 
@@ -153,9 +186,17 @@ Frontend sẽ chạy ở `http://localhost:3000`
    - Click vào brief để xem chi tiết với markdown rendering
    - Xóa brief bằng icon dustbin ở góc phải mỗi card
 
-4. **Content Packs & Tiếp theo**
+4. **Platform Configuration & Distribution**
+   - Truy cập `/settings` để configure các platform (Twitter, Facebook, LinkedIn, etc.)
+   - Nhập credentials cho từng platform và test connection
    - Từ brief detail, click "Tạo Content Pack từ brief"
-   - Tiếp tục workflow: Chỉnh sửa → Duyệt → Derivatives → Xuất bản
+   - Generate derivatives cho multiple platforms với content được tối ưu
+   - Schedule và publish nội dung lên các platform đã configure
+
+5. **Analytics & Monitoring**
+   - Xem performance analytics của từng platform
+   - Track engagement metrics và reach
+   - Optimize content strategy based on data
 
 ## 📂 Cấu trúc thư mục
 
@@ -176,8 +217,16 @@ idea-management-app/
 │   │   │   ├── contentPlans.ts # Content plans API routes
 │   │   │   ├── briefs.ts      # Briefs API routes
 │   │   │   ├── packs.ts       # Content packs API routes
+│   │   │   ├── platforms.ts   # Platform integration routes
+│   │   │   ├── derivatives.ts # Content derivatives routes
 │   │   │   ├── documents.ts   # Documents API routes
 │   │   │   └── ai.ts          # AI API routes
+│   │   ├── platforms/         # Platform integration system
+│   │   │   ├── base/          # BasePlatform abstract class
+│   │   │   ├── social/        # Social media platforms
+│   │   │   ├── email/         # Email marketing platforms
+│   │   │   ├── cms/           # Content management systems
+│   │   │   └── registry.ts    # Platform registry
 │   │   ├── services/
 │   │   │   ├── aiService.ts   # AI service
 │   │   │   ├── llmClient.ts   # LLM client
@@ -229,6 +278,19 @@ curl -X POST http://localhost:4000/briefs/create-from-plan/1 \
   -H "Content-Type: application/json" \
   -d '{}'
 curl http://localhost:4000/briefs/{brief_id}
+
+# Platform Integration
+curl http://localhost:4000/platforms/supported
+curl http://localhost:4000/platforms/configurations
+curl -X POST http://localhost:4000/platforms/test-connection \
+  -H "Content-Type: application/json" \
+  -d '{"platform_type": "twitter", "credentials": {"apiKey": "test", "apiSecret": "test", "accessToken": "test", "accessTokenSecret": "test"}}'
+
+# Content Distribution
+curl http://localhost:4000/derivatives
+curl -X POST http://localhost:4000/derivatives \
+  -H "Content-Type: application/json" \
+  -d '{"idea_id": 1, "platforms": ["twitter", "facebook"], "content_types": ["social_post"]}'
 ```
 
 ## 🛑 Dừng ứng dụng
@@ -265,12 +327,23 @@ docker-compose down -v
 
 ## 🎓 Học viên có thể mở rộng
 
+### ✅ Completed Features
 - ✅ Thêm chức năng cập nhật (PUT endpoint) - Đã có
 - ✅ Thêm search và filter - Đã có search
+- ✅ Thêm tính năng chỉnh sửa, duyệt, tạo derivatives - Đã hoàn thành
+- ✅ Thêm tính năng xuất bản - Multi-platform publishing system hoàn chính
+- ✅ Platform authentication system - 7 platforms with real authentication
+- ✅ Content optimization for each platform - Character limits, hashtags, formatting
+- ✅ Analytics and performance tracking - Platform metrics và engagement data
+
+### 🚀 Advanced Extensions
 - Thêm pagination cho danh sách
-- Thêm authentication
-- Thêm tính năng chỉnh sửa, duyệt, tạo derivatives
-- Thêm tính năng xuất bản
+- Thêm user authentication và authorization
+- Advanced scheduling với timezone support
+- Real-time collaboration features
+- Advanced analytics dashboard với charts
+- A/B testing for content variations
+- Machine learning for content optimization
 - Deploy lên production (Vercel, Railway, etc.)
 
 ## 🔄 Workflow Navigation

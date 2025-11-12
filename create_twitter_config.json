@@ -1,0 +1,1 @@
+{"platform_type":"twitter","platform_name":"My Twitter Account","configuration":{"handle":"@testaccount"},"credentials":{"apiKey":"test_api_key_123","apiSecret":"test_secret_456","accessToken":"test_token_789","accessTokenSecret":"test_token_secret_012"},"test_connection":true}

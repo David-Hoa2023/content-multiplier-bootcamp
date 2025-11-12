@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { AppLayout } from '@/components/layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { 
   DerivativeTabs,
   type Platform,
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 // Sample analytics data
 const sampleAnalyticsStats: AnalyticsStats = {
@@ -69,7 +71,10 @@ const sampleAnalyticsStats: AnalyticsStats = {
 
 export default function MultiPlatformPublisherPage() {
   const { toast } = useToast()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [content, setContent] = useState('')
+  const [sourceData, setSourceData] = useState<any>(null)
   const [platforms, setPlatforms] = useState<PlatformConfig[]>([
     {
       platform: 'Twitter',
@@ -100,6 +105,50 @@ export default function MultiPlatformPublisherPage() {
   const [activePlatform, setActivePlatform] = useState<Platform>('Twitter')
   const [isGenerating, setIsGenerating] = useState(false)
   const [derivatives, setDerivatives] = useState<Derivative[]>([])
+
+  // Load data from Derivatives page if coming from there
+  useEffect(() => {
+    const from = searchParams.get('from')
+    const packId = searchParams.get('pack_id')
+    
+    if (from === 'derivatives' && typeof window !== 'undefined') {
+      const storedData = sessionStorage.getItem('derivatives_data')
+      if (storedData) {
+        const data = JSON.parse(storedData)
+        setSourceData(data)
+        
+        // Set original content from the pack
+        if (data.pack?.draft_content) {
+          setContent(data.pack.draft_content)
+        }
+        
+        // Load existing derivatives
+        if (data.derivatives && data.derivatives.length > 0) {
+          const loadedPlatforms = data.derivatives.map((d: any) => ({
+            platform: d.platform,
+            characterLimit: d.characterLimit,
+            content: d.content || ''
+          }))
+          setPlatforms(loadedPlatforms)
+          
+          // Create derivative objects for display
+          const loadedDerivatives = data.derivatives
+            .filter((d: any) => d.content)
+            .map((d: any) => ({
+              id: `${d.platform}-loaded`,
+              title: `Content for ${d.platform}`,
+              platform: d.platform,
+              content: d.content,
+              status: 'draft' as const
+            }))
+          setDerivatives(loadedDerivatives)
+        }
+        
+        // Clear session storage after loading
+        sessionStorage.removeItem('derivatives_data')
+      }
+    }
+  }, [searchParams])
 
   const updatePlatformContent = (platform: Platform, newContent: string) => {
     setPlatforms(prev =>
@@ -204,6 +253,15 @@ export default function MultiPlatformPublisherPage() {
           <p className="text-muted-foreground mt-2">
             Tạo và quản lý nội dung cho nhiều nền tảng mạng xã hội
           </p>
+          {sourceData && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Đang làm việc với:</span>
+              <Badge variant="secondary">{sourceData.pack?.pack_id}</Badge>
+              {sourceData.plan && (
+                <Badge variant="outline">Từ Content Plan</Badge>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Content Input Section */}
@@ -214,7 +272,7 @@ export default function MultiPlatformPublisherPage() {
               Nội dung gốc
             </CardTitle>
             <CardDescription>
-              Nhập nội dung để tạo derivatives cho các platform
+              {sourceData ? 'Nội dung từ Derivatives page' : 'Nhập nội dung để tạo derivatives cho các platform'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -224,19 +282,30 @@ export default function MultiPlatformPublisherPage() {
               onChange={(e) => setContent(e.target.value)}
               className="min-h-[120px]"
             />
-            <div className="flex justify-end gap-2">
-              <SharePreviewLink
-                packId="multi-platform-publisher"
-                onGenerateLink={handleGenerateShareLink}
-              />
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating || !content.trim()}
-                className="gap-2"
-              >
-                <Sparkles className="h-4 w-4" />
-                {isGenerating ? 'Đang tạo...' : 'Tạo Derivatives'}
-              </Button>
+            <div className="flex justify-between">
+              <div>
+                {sourceData && (
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push(`/derivatives?pack_id=${searchParams.get('pack_id')}`)}>
+                    ← Quay lại Derivatives
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <SharePreviewLink
+                  packId={searchParams.get('pack_id') || 'multi-platform-publisher'}
+                  onGenerateLink={handleGenerateShareLink}
+                />
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !content.trim()}
+                  className="gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {isGenerating ? 'Đang tạo...' : sourceData ? 'Tạo thêm Derivatives' : 'Tạo Derivatives'}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
