@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Sparkles, FileText, Lightbulb, ArrowRight, Package, Edit, CheckCircle, Share2, Send } from 'lucide-react';
+import { Loader2, Sparkles, FileText, Lightbulb, ArrowRight, Package, Edit, CheckCircle, Share2, Send, BookOpen, Search } from 'lucide-react';
 import ErrorMessage from './components/ErrorMessage';
 import SuccessMessage from './components/SuccessMessage';
 import ContentStats from './components/ContentStats';
@@ -18,6 +18,9 @@ import {
 import { LLMProviderSwitcher, type SelectedProvider } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 
 interface Idea {
@@ -51,6 +54,8 @@ export default function Home() {
     persona: '',
     industry: '',
     status: 'draft',
+    useKnowledgeBase: false,
+    knowledgeQuery: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -158,6 +163,8 @@ export default function Home() {
           persona: '',
           industry: '',
           status: 'draft',
+          useKnowledgeBase: false,
+          knowledgeQuery: '',
         });
         fetchIdeas();
       } else {
@@ -186,13 +193,17 @@ export default function Home() {
     setGenerateSuccess(null);
 
     try {
-      const response = await fetch(`${API_URL}/ai/generate-content`, {
+      const response = await fetch(`${API_URL}/ai/generate-idea`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: `Tạo mô tả chi tiết cho ý tưởng content sau: "${formData.title}". Mô tả nên bao gồm: mục tiêu, đối tượng mục tiêu, nội dung chính, và định dạng đề xuất. Độ dài khoảng 200-300 từ.`,
+          title: formData.title,
+          persona: formData.persona || undefined,
+          industry: formData.industry || undefined,
+          useKnowledgeBase: formData.useKnowledgeBase,
+          knowledgeQuery: formData.knowledgeQuery || formData.title,
           temperature: 0.7,
         }),
       });
@@ -204,9 +215,14 @@ export default function Home() {
 
       const data = await response.json();
 
-      if (data.success && data.content) {
-        setFormData({ ...formData, description: data.content });
-        setGenerateSuccess('✅ Đã tạo mô tả thành công!');
+      if (data.success && data.data) {
+        setFormData({ ...formData, description: data.data.description });
+        
+        let successMessage = '✅ Đã tạo mô tả thành công!';
+        if (data.data.knowledgeUsed) {
+          successMessage += ` (Sử dụng ${data.data.ragContext?.length || 0} nguồn từ Knowledge Base)`;
+        }
+        setGenerateSuccess(successMessage);
         
         if (data.usedProvider !== data.requestedProvider) {
           console.log(`ℹ️ Auto-selected provider: ${data.usedProvider} (requested: ${data.requestedProvider})`);
@@ -468,6 +484,91 @@ export default function Home() {
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                   </select>
+                </div>
+
+                {/* Knowledge Base Integration */}
+                <div className="border border-border rounded-lg p-4 bg-muted/50">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Checkbox
+                      id="use-knowledge-base"
+                      checked={formData.useKnowledgeBase}
+                      onCheckedChange={(checked) => 
+                        setFormData({ ...formData, useKnowledgeBase: checked === true })
+                      }
+                    />
+                    <Label htmlFor="use-knowledge-base" className="flex items-center gap-2 font-medium">
+                      <BookOpen className="h-4 w-4" />
+                      Sử dụng Knowledge Base
+                    </Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Tích hợp thông tin từ tài liệu đã tải lên để tạo ý tưởng phù hợp và chi tiết hơn
+                  </p>
+                  
+                  {formData.useKnowledgeBase && (
+                    <div>
+                      <Label htmlFor="knowledge-query" className="text-sm mb-2 block">
+                        Từ khóa tìm kiếm (tùy chọn)
+                      </Label>
+                      <Input
+                        id="knowledge-query"
+                        value={formData.knowledgeQuery}
+                        onChange={(e) => setFormData({ ...formData, knowledgeQuery: e.target.value })}
+                        placeholder="Để trống để sử dụng tiêu đề làm từ khóa tìm kiếm..."
+                        className="text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Nếu để trống, hệ thống sẽ sử dụng tiêu đề để tìm kiếm thông tin liên quan
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Generate Description Button */}
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateDescription}
+                    disabled={!formData.title.trim() || isGenerating}
+                    className="flex items-center gap-2 flex-1"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Đang tạo...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        {formData.useKnowledgeBase ? 'Tạo mô tả (với KB)' : 'Tạo mô tả bằng AI'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {generateSuccess && <SuccessMessage message={generateSuccess} />}
+                {generateError && <ErrorMessage message={generateError} />}
+
+                {/* Description Field */}
+                <div>
+                  <label className="block font-semibold text-base mb-2">
+                    Mô tả chi tiết
+                  </label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Mô tả chi tiết về ý tưởng, bao gồm mục tiêu, đối tượng và nội dung chính
+                  </p>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={6}
+                    maxLength={2000}
+                    className="w-full border border-input rounded-lg px-4 py-2 focus:ring-2 focus:ring-ring bg-background resize-y"
+                    placeholder="Nhập mô tả chi tiết hoặc sử dụng AI để tự động tạo..."
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formData.description.length}/2000 characters
+                  </p>
                 </div>
 
                 <button

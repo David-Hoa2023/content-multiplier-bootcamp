@@ -137,7 +137,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // POST generate idea content - Convenience endpoint
+  // POST generate idea content - Convenience endpoint with RAG integration
   fastify.post<{
     Body: {
       title: string;
@@ -146,10 +146,12 @@ export async function aiRoutes(fastify: FastifyInstance) {
       provider?: AIProvider;
       model?: string;
       temperature?: number;
+      useKnowledgeBase?: boolean;
+      knowledgeQuery?: string;
     };
   }>('/ai/generate-idea', async (request, reply) => {
     try {
-      const { title, persona, industry, provider, model, temperature } = request.body;
+      const { title, persona, industry, provider, model, temperature, useKnowledgeBase, knowledgeQuery } = request.body;
 
       if (!title || !title.trim()) {
         return reply.status(400).send({
@@ -177,15 +179,60 @@ export async function aiRoutes(fastify: FastifyInstance) {
         console.log(`⚠️ Provider '${requestedProvider}' not available. Auto-selecting '${selectedProvider}'`);
       }
 
-      // Build prompt for idea generation
+      // Get RAG context if requested
+      let ragContext = '';
+      let ragResults: any[] = [];
+      if (useKnowledgeBase) {
+        try {
+          const query = knowledgeQuery || title;
+          const ragResponse = await fetch('http://localhost:4000/api/knowledge/query', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              query,
+              limit: 5,
+              similarity_threshold: 0.7
+            })
+          });
+          
+          const ragData = await ragResponse.json();
+          if (ragData.success && ragData.data.results.length > 0) {
+            ragResults = ragData.data.results;
+            ragContext = '\n\n--- Relevant Context from Knowledge Base ---\n';
+            ragResults.forEach((result, index) => {
+              ragContext += `\n[Source ${index + 1}: ${result.document.title}]\n`;
+              ragContext += `${result.chunk_text}\n`;
+            });
+            ragContext += '\n--- End of Context ---\n\n';
+          }
+        } catch (error) {
+          console.warn('Failed to fetch RAG context:', error);
+          // Continue without RAG context
+        }
+      }
+
+      // Build prompt for idea generation with optional RAG context
       let prompt = `Generate a detailed content idea description for the following:\n\n`;
       prompt += `Title: ${title}\n`;
       if (persona) prompt += `Target Persona: ${persona}\n`;
       if (industry) prompt += `Industry: ${industry}\n`;
+      
+      if (ragContext) {
+        prompt += ragContext;
+        prompt += `Please use the relevant information from the knowledge base context above to inform your response. `;
+      }
+      
       prompt += `\nPlease provide:\n`;
       prompt += `1. A compelling description (2-3 sentences)\n`;
       prompt += `2. Key talking points or content pillars\n`;
       prompt += `3. Suggested content format or approach\n`;
+      
+      if (ragContext) {
+        prompt += `4. How the context from knowledge base can be leveraged\n`;
+      }
+      
       prompt += `\nKeep it concise and actionable.`;
 
       const result = await generateContent({
@@ -193,7 +240,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
         provider: selectedProvider,
         model,
         temperature: temperature || 0.7,
-        maxTokens: 500,
+        maxTokens: ragContext ? 750 : 500,
       });
 
       if (!result.success) {
@@ -209,6 +256,8 @@ export async function aiRoutes(fastify: FastifyInstance) {
           description: result.content,
           provider: result.provider,
           model: result.model,
+          ragContext: ragResults.length > 0 ? ragResults : undefined,
+          knowledgeUsed: ragResults.length > 0,
         },
         requestedProvider: requestedProvider,
         usedProvider: selectedProvider,

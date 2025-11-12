@@ -50,15 +50,9 @@ interface LayoutProps {
 }
 
 const navigation: NavigationItem[] = [
-  { name: 'Ideas', href: '/', icon: Lightbulb },
+  // Resources & Knowledge
   { name: 'Knowledge Base', href: '/knowledge', icon: BookOpen },
-  { name: 'Briefs', href: '/briefs', icon: FileText },
-  { name: 'Drafts', href: '/drafts', icon: Pen },
   { name: 'Documents', href: '/documents', icon: FolderOpen },
-  { name: 'Test Packs', href: '/test-packs-draft', icon: Package },
-  { name: 'Documents Demo', href: '/documents-demo', icon: FolderOpen },
-  { name: 'Multi-platform Publisher', href: '/multi-platform-publisher', icon: Globe },
-  { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export default function Layout({ 
@@ -124,7 +118,7 @@ export default function Layout({
           })}
         </TooltipProvider>
 
-        {/* Workflow Section */}
+        {/* Main Content Workflow */}
         <div className="mt-6 pt-6 border-t">
           <div className="px-3 mb-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -134,46 +128,53 @@ export default function Layout({
           <div className="space-y-1">
             {[
               { 
-                name: 'Ideas', 
+                name: '1. Ideas', 
                 icon: Lightbulb, 
                 href: '/', 
-                active: pathname === '/' 
+                active: pathname === '/',
+                description: 'Tạo và quản lý ý tưởng'
               },
               { 
-                name: 'Briefs', 
+                name: '2. Briefs', 
                 icon: FileText, 
                 href: '/briefs', 
-                active: pathname.startsWith('/briefs') 
+                active: pathname.startsWith('/briefs'),
+                description: 'Tạo brief chi tiết'
               },
               { 
-                name: 'Content Packs', 
+                name: '3. Content Packs', 
                 icon: Package, 
                 href: '/test-packs-draft', 
-                active: pathname.startsWith('/test-packs-draft') || pathname.startsWith('/packs') 
+                active: pathname.startsWith('/test-packs-draft') || pathname.startsWith('/packs'),
+                description: 'Tạo gói nội dung'
               },
               { 
-                name: 'Chỉnh sửa', 
+                name: '4. Chỉnh sửa', 
                 icon: Edit, 
-                href: '/edit', 
-                active: pathname.startsWith('/edit') || pathname.includes('/edit') 
+                href: '/drafts', 
+                active: pathname.startsWith('/drafts') || pathname.startsWith('/edit'),
+                description: 'Chỉnh sửa nội dung'
               },
               { 
-                name: 'Duyệt', 
+                name: '5. Duyệt', 
                 icon: CheckCircle, 
                 href: '/review', 
-                active: pathname.startsWith('/review') 
+                active: pathname.startsWith('/review'),
+                description: 'Duyệt nội dung'
               },
               { 
-                name: 'Derivatives', 
+                name: '6. Nội dung Platform', 
                 icon: Share2, 
                 href: '/derivatives', 
-                active: pathname.startsWith('/derivatives') 
+                active: pathname.startsWith('/derivatives'),
+                description: 'Tạo nội dung cho từng platform'
               },
               { 
-                name: 'Xuất bản', 
+                name: '7. Xuất bản', 
                 icon: Send, 
-                href: '/publish', 
-                active: pathname.startsWith('/publish') 
+                href: '/multi-platform-publisher', 
+                active: pathname.startsWith('/multi-platform-publisher') || pathname.startsWith('/publish'),
+                description: 'Xuất bản đa platform'
               },
             ].map((step, index) => (
               <React.Fragment key={step.name}>
@@ -199,11 +200,45 @@ export default function Layout({
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="lg:hidden">
-                    {step.name}
+                    <div className="text-sm">
+                      <div className="font-medium">{step.name}</div>
+                      <div className="text-xs text-muted-foreground">{step.description}</div>
+                    </div>
                   </TooltipContent>
                 </Tooltip>
               </React.Fragment>
             ))}
+          </div>
+        </div>
+
+        {/* Utilities & Settings */}
+        <div className="mt-6 pt-6 border-t">
+          <div className="px-3 mb-3">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Tiện ích
+            </h3>
+          </div>
+          <div className="space-y-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/settings"
+                  onClick={() => mobile && setIsMobileMenuOpen(false)}
+                  className={cn(
+                    'group flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:bg-accent hover:text-accent-foreground w-full',
+                    pathname.startsWith('/settings') 
+                      ? 'bg-accent text-accent-foreground' 
+                      : 'text-muted-foreground'
+                  )}
+                >
+                  <Settings className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Settings</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="lg:hidden">
+                Settings
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </nav>
