@@ -1,0 +1,15 @@
+# Cloudflare Pages Configuration
+name = "content-multiplier-frontend"
+compatibility_date = "2024-01-15"
+
+[build]
+command = "npm run build"
+cwd = "/"
+watch_dir = "src"
+
+[build.environment]
+NODE_VERSION = "18"
+NPM_VERSION = "9"
+
+[[build.environment_variables]]
+NODE_ENV = "production"

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { LLMProviderSwitcher } from '@/components/ui/llm-provider-switcher'
 
 export default function SettingsPage() {
   return (
@@ -73,6 +74,18 @@ export default function SettingsPage() {
                 />
               </div>
               <Button>Cập nhật thông tin</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Provider</CardTitle>
+              <CardDescription>
+                Cấu hình nhà cung cấp AI và mô hình cho việc tạo nội dung.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LLMProviderSwitcher className="max-w-none" />
             </CardContent>
           </Card>
 

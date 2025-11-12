@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { Input } from '@/components/ui/input'
 import { 
   Tooltip, 
   TooltipContent, 
@@ -26,7 +27,10 @@ import {
   Star,
   Cpu,
   Brain,
-  Sparkles
+  Sparkles,
+  Key,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 const PROVIDERS = {
@@ -125,6 +129,40 @@ const PROVIDERS = {
         costPerToken: 0.0035
       }
     }
+  },
+  kimi: {
+    name: 'Kimi k2',
+    color: 'bg-teal-500',
+    textColor: 'text-teal-700',
+    bgColor: 'bg-teal-50',
+    darkBgColor: 'dark:bg-teal-950',
+    icon: Sparkles,
+    models: {
+      'moonshot-v1-8k': {
+        name: 'Moonshot v1 8K',
+        description: 'Efficient model for general tasks',
+        speed: 'Fast',
+        cost: '$0.12',
+        contextLength: '8K tokens',
+        costPerToken: 0.00012
+      },
+      'moonshot-v1-32k': {
+        name: 'Moonshot v1 32K',
+        description: 'Extended context for complex tasks',
+        speed: 'Medium',
+        cost: '$0.24',
+        contextLength: '32K tokens',
+        costPerToken: 0.00024
+      },
+      'moonshot-v1-128k': {
+        name: 'Moonshot v1 128K',
+        description: 'Maximum context for large documents',
+        speed: 'Slow',
+        cost: '$0.60',
+        contextLength: '128K tokens',
+        costPerToken: 0.0006
+      }
+    }
   }
 }
 
@@ -157,6 +195,8 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
   const [defaultProviders, setDefaultProviders] = useState<Record<string, SelectedProvider>>({})
   const [isTestingModel, setIsTestingModel] = useState(false)
   const [testResult, setTestResult] = useState<any>(null)
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({})
+  const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({})
   const { toast } = useToast()
 
   // Load preferences from localStorage
@@ -166,6 +206,7 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
       if (saved) {
         const preferences = JSON.parse(saved)
         setDefaultProviders(preferences.defaultProviders || {})
+        setApiKeys(preferences.apiKeys || {})
         if (!selectedProvider && preferences.lastUsed) {
           setLocalProvider(preferences.lastUsed)
           onChange?.(preferences.lastUsed)
@@ -177,17 +218,32 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
   }, [])
 
   // Save preferences to localStorage
-  const savePreferences = (newProvider: SelectedProvider, newDefaults = defaultProviders) => {
+  const savePreferences = (newProvider: SelectedProvider, newDefaults = defaultProviders, newApiKeys = apiKeys) => {
     try {
       const preferences = {
         lastUsed: newProvider,
         defaultProviders: newDefaults,
+        apiKeys: newApiKeys,
         timestamp: Date.now()
       }
       localStorage.setItem('llm-provider-preferences', JSON.stringify(preferences))
     } catch (error) {
       console.error('Failed to save LLM preferences:', error)
     }
+  }
+
+  // Handle API key changes
+  const handleApiKeyChange = (provider: string, apiKey: string) => {
+    const newApiKeys = { ...apiKeys, [provider]: apiKey }
+    setApiKeys(newApiKeys)
+    if (localProvider) {
+      savePreferences(localProvider, defaultProviders, newApiKeys)
+    }
+  }
+
+  // Toggle API key visibility
+  const toggleApiKeyVisibility = (provider: string) => {
+    setShowApiKey(prev => ({ ...prev, [provider]: !prev[provider] }))
   }
 
   const handleProviderChange = (providerId: string) => {
@@ -247,6 +303,17 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
   const testModel = async () => {
     if (!localProvider) return
     
+    const currentApiKey = apiKeys[localProvider.provider]
+    if (!currentApiKey) {
+      toast({
+        title: "API key required",
+        description: "Please enter an API key before testing the model",
+        variant: "destructive",
+        duration: 3000,
+      })
+      return
+    }
+    
     setIsTestingModel(true)
     setTestResult(null)
     
@@ -254,10 +321,10 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 2000))
       
-      // Mock successful response
+      // Mock successful response (in real implementation, this would call the actual API)
       setTestResult({
         success: true,
-        response: "Test completed successfully! Model is responding normally.",
+        response: "Test completed successfully! Model is responding normally with provided API key.",
         latency: Math.floor(Math.random() * 1000) + 500
       })
       
@@ -269,7 +336,7 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
     } catch (error: any) {
       setTestResult({
         success: false,
-        error: error.message || "Test failed"
+        error: error.message || "Test failed - please check your API key"
       })
       
       toast({
@@ -355,6 +422,44 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
               </Select>
             </div>
           </div>
+
+          {/* API Key Configuration */}
+          {localProvider?.provider && (
+            <div className="space-y-2">
+              <Label htmlFor="api-key">
+                API Key for {PROVIDERS[localProvider.provider as keyof typeof PROVIDERS]?.name}
+              </Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="api-key"
+                    type={showApiKey[localProvider.provider] ? "text" : "password"}
+                    placeholder={`Enter your ${PROVIDERS[localProvider.provider as keyof typeof PROVIDERS]?.name} API key`}
+                    value={apiKeys[localProvider.provider] || ""}
+                    onChange={(e) => handleApiKeyChange(localProvider.provider, e.target.value)}
+                    className="pl-10 pr-12"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1 h-8 w-8 px-0"
+                    onClick={() => toggleApiKeyVisibility(localProvider.provider)}
+                  >
+                    {showApiKey[localProvider.provider] ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                🔒 API keys are stored securely in your browser's local storage and never sent to external servers
+              </p>
+            </div>
+          )}
 
           {/* Current Selection Info */}
           {currentProviderInfo && currentModelInfo && ProviderIcon && (

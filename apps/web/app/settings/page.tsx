@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Button from '../components/Button'
 
 interface LLMConfig {
-    provider: 'openai' | 'deepseek' | 'anthropic' | 'gemini' | 'grok'
+    provider: 'openai' | 'deepseek' | 'anthropic' | 'gemini' | 'grok' | 'kimi'
     apiKey: string
     model: string
     baseUrl?: string
@@ -42,6 +42,13 @@ const LLM_PROVIDERS = {
         models: ['grok-beta', 'grok-1.5', 'grok-4-fast-non-reasoning'],
         defaultModel: 'grok-beta',
         baseUrl: 'https://api.x.ai',
+        requiresApiKey: true
+    },
+    kimi: {
+        name: 'Kimi k2',
+        models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
+        defaultModel: 'moonshot-v1-8k',
+        baseUrl: 'https://api.moonshot.cn',
         requiresApiKey: true
     }
 }
@@ -319,7 +326,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Custom Base URL (for providers that need it) */}
-                {['deepseek', 'gemini', 'grok'].includes(config.provider) && (
+                {['deepseek', 'gemini', 'grok', 'kimi'].includes(config.provider) && (
                     <div style={{ marginBottom: '2rem' }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
                             Base URL
@@ -397,6 +404,7 @@ export default function SettingsPage() {
                         {config.provider === 'anthropic' && 'Anthropic provides Claude models with strong reasoning, safety features, and long context windows.'}
                         {config.provider === 'gemini' && 'Google Gemini offers powerful multimodal AI with strong reasoning and real-time access to current information.'}
                         {config.provider === 'grok' && 'xAI Grok provides helpful AI with a focus on truth-seeking and real-time access to current events.'}
+                        {config.provider === 'kimi' && 'Kimi k2 offers advanced AI models with strong Chinese language support and competitive performance.'}
                     </p>
                 </div>
             </div>

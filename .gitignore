@@ -74,3 +74,15 @@ apps/api/.data/
 add_mailchimp_creds.js
 test_publish.json
 
+# Deployment specific
+.railway/
+.wrangler/
+
+# Backend specific
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Frontend specific
+frontend/.next/
+frontend/out/
+
