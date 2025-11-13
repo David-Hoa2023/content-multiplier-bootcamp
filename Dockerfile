@@ -24,8 +24,8 @@ COPY package.json ./
 # Build frontend (needs dev deps like autoprefixer, postcss, tailwindcss)
 RUN cd frontend && npm run build
 
-# Clean up frontend node_modules and reinstall only production deps
-RUN cd frontend && rm -rf node_modules && npm ci --omit=dev
+# Clean up frontend node_modules - not needed after build for Next.js static export
+RUN cd frontend && rm -rf node_modules
 
 # Make start script executable
 RUN chmod +x start.sh
