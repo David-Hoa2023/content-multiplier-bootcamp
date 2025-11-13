@@ -346,7 +346,7 @@ export function ClaimsLedgerTable({
                       <SelectItem value="all">All Confidence</SelectItem>
                       <SelectItem value="high">High (≥80%)</SelectItem>
                       <SelectItem value="medium">Medium (50-79%)</SelectItem>
-                      <SelectItem value="low">Low (<50%)</SelectItem>
+                      <SelectItem value="low">Low (&lt;50%)</SelectItem>
                       <SelectItem value="no-source">No Source</SelectItem>
                     </SelectContent>
                   </Select>

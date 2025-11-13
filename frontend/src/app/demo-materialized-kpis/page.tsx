@@ -218,7 +218,7 @@ export default function DemoMaterializedKPIsPage() {
         ...kpi,
         value: kpi.value + (Math.random() - 0.5) * kpi.value * 0.1,
         change: (Math.random() - 0.5) * 40,
-        changeType: Math.random() > 0.3 ? 'increase' : Math.random() > 0.5 ? 'decrease' : 'neutral' as const,
+        changeType: (Math.random() > 0.3 ? 'increase' : Math.random() > 0.5 ? 'decrease' : 'neutral') as 'increase' | 'decrease' | 'neutral',
         lastUpdated: new Date().toISOString()
       }))
       setKPIs(updatedKPIs)

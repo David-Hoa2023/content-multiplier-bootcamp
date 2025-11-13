@@ -233,7 +233,7 @@ export default function MultiPlatformPublisherPage() {
         id: `${p.platform}-${Date.now()}`,
         title: `Content for ${p.platform}`,
         platform: p.platform,
-        content: p.content,
+        content: p.content || '',
         status: 'draft' as const
       }))
   }, [platforms])

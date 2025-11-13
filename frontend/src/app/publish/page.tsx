@@ -150,7 +150,7 @@ export default function PublishPage() {
     const filtered = getFilteredDerivatives(status)
     return {
       count: filtered.length,
-      platforms: [...new Set(filtered.map(d => d.platform))].length,
+      platforms: Array.from(new Set(filtered.map(d => d.platform))).length,
       totalReach: filtered.reduce((sum, d) => sum + (d.analytics?.reach || 0), 0),
       avgEngagement: filtered.length > 0 
         ? filtered.reduce((sum, d) => sum + (d.analytics?.engagement_rate || 0), 0) / filtered.length

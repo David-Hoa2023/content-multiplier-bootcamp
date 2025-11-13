@@ -29,9 +29,7 @@ const sampleClaims: Claim[] = [
     source_url: 'https://vneconomy.vn/gdp-viet-nam-tang-truong-8-02-trong-quy-iii-2023.htm',
     retrieved_snippet: 'Tổng sản phẩm trong nước (GDP) quý III/2023 ước tính tăng 5.33% so với cùng kỳ năm trước, tính chung 9 tháng đầu năm 2023 tăng 5.32% so với cùng kỳ năm 2022.',
     confidence_score: 92,
-    created_at: '2024-01-15T10:30:00Z',
-    category: 'Economy',
-    verified: true
+    created_at: '2024-01-15T10:30:00Z'
   },
   {
     id: '2',
@@ -39,9 +37,7 @@ const sampleClaims: Claim[] = [
     source_url: 'https://openai.com/blog/new-models-and-developer-products-announced-at-devday',
     retrieved_snippet: 'GPT-4 Turbo is our most capable model, featuring improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more.',
     confidence_score: 88,
-    created_at: '2024-01-14T14:20:00Z',
-    category: 'Technology',
-    verified: true
+    created_at: '2024-01-14T14:20:00Z'
   },
   {
     id: '3',
@@ -49,9 +45,7 @@ const sampleClaims: Claim[] = [
     source_url: '',
     retrieved_snippet: 'Theo số liệu thống kê từ Hiệp hội Lương thực Việt Nam, xuất khẩu gạo của Việt Nam trong 6 tháng đầu năm đạt 4.2 triệu tấn.',
     confidence_score: 75,
-    created_at: '2024-01-13T09:15:00Z',
-    category: 'Agriculture',
-    verified: false
+    created_at: '2024-01-13T09:15:00Z'
   },
   {
     id: '4',
@@ -59,9 +53,7 @@ const sampleClaims: Claim[] = [
     source_url: 'https://react.dev/blog/2022/03/29/react-v18',
     retrieved_snippet: 'React 18 is now available on npm! In our last post, we shared step-by-step instructions for upgrading your app to React 18.',
     confidence_score: 95,
-    created_at: '2024-01-12T16:45:00Z',
-    category: 'Technology',
-    verified: true
+    created_at: '2024-01-12T16:45:00Z'
   },
   {
     id: '5',
@@ -69,9 +61,7 @@ const sampleClaims: Claim[] = [
     source_url: 'https://www.gso.gov.vn/px-web-2/?pxid=V0203&theme=Lao%20động%20-%20Việc%20làm',
     retrieved_snippet: 'Tỷ lệ thất nghiệp trong độ tuổi lao động quý II/2023 ở khu vực thành thị là 3.02%, khu vực nông thôn là 1.52%.',
     confidence_score: 82,
-    created_at: '2024-01-11T11:30:00Z',
-    category: 'Labor',
-    verified: true
+    created_at: '2024-01-11T11:30:00Z'
   },
   {
     id: '6',
@@ -79,9 +69,7 @@ const sampleClaims: Claim[] = [
     source_url: '',
     retrieved_snippet: 'TypeScript 5.0 brings many new features including decorators, const assertions, and improved template literal types for better type checking.',
     confidence_score: 45,
-    created_at: '2024-01-10T13:20:00Z',
-    category: 'Technology',
-    verified: false
+    created_at: '2024-01-10T13:20:00Z'
   },
   {
     id: '7',
@@ -89,9 +77,7 @@ const sampleClaims: Claim[] = [
     source_url: 'https://baochinhphu.vn/xuat-khau-ca-phe-viet-nam-tang-12-trong-10-thang-dau-nam-2023-102231030084557894.htm',
     retrieved_snippet: 'Theo Hiệp hội Cà phê Ca cao Việt Nam, xuất khẩu cà phê 10 tháng đầu năm 2023 ước đạt 1.4 triệu tấn, tăng 12.5% so với cùng kỳ năm trước.',
     confidence_score: 91,
-    created_at: '2024-01-09T08:45:00Z',
-    category: 'Agriculture',
-    verified: true
+    created_at: '2024-01-09T08:45:00Z'
   },
   {
     id: '8',
@@ -99,9 +85,7 @@ const sampleClaims: Claim[] = [
     source_url: 'https://nextjs.org/blog/next-14',
     retrieved_snippet: 'Next.js 14 is here with performance improvements, new features including Turbopack, Server Actions stable, and more.',
     confidence_score: 89,
-    created_at: '2024-01-08T15:30:00Z',
-    category: 'Technology',
-    verified: true
+    created_at: '2024-01-08T15:30:00Z'
   },
   {
     id: '9',
@@ -109,9 +93,7 @@ const sampleClaims: Claim[] = [
     source_url: '',
     retrieved_snippet: 'Chỉ số giá tiêu dùng (CPI) tháng 11/2023 tăng 0.33% so với tháng trước và tăng 4.37% so với cùng kỳ năm trước.',
     confidence_score: 38,
-    created_at: '2024-01-07T12:15:00Z',
-    category: 'Economy',
-    verified: false
+    created_at: '2024-01-07T12:15:00Z'
   },
   {
     id: '10',
@@ -119,9 +101,7 @@ const sampleClaims: Claim[] = [
     source_url: 'https://www.anthropic.com/news/claude-3-family',
     retrieved_snippet: `Today, we are announcing the Claude 3 model family, which sets new industry benchmarks across a wide range of cognitive tasks.`,
     confidence_score: 94,
-    created_at: '2024-01-06T09:20:00Z',
-    category: 'Technology',
-    verified: true
+    created_at: '2024-01-06T09:20:00Z'
   },
   {
     id: '11',
@@ -129,9 +109,7 @@ const sampleClaims: Claim[] = [
     source_url: 'https://www.haiquanonline.com.vn/kim-ngach-xuat-khau-11-thang-dau-nam-2023-dat-371-85-ty-usd-176914.html',
     retrieved_snippet: 'Tổng Kim ngạch xuất nhập khẩu hàng hóa của cả nước 11 tháng đầu năm 2023 ước đạt 686.8 tỷ USD, giảm 11.9% so với cùng kỳ năm trước.',
     confidence_score: 87,
-    created_at: '2024-01-05T14:40:00Z',
-    category: 'Economy',
-    verified: true
+    created_at: '2024-01-05T14:40:00Z'
   },
   {
     id: '12',
@@ -139,9 +117,7 @@ const sampleClaims: Claim[] = [
     source_url: '',
     retrieved_snippet: 'Meta has released Llama 2, a collection of pretrained and fine-tuned large language models ranging in scale from 7B to 70B parameters.',
     confidence_score: 62,
-    created_at: '2024-01-04T16:25:00Z',
-    category: 'Technology',
-    verified: false
+    created_at: '2024-01-04T16:25:00Z'
   }
 ]
 
@@ -203,9 +179,7 @@ export default function DemoClaimsLedgerPage() {
       source_url: Math.random() > 0.3 ? 'https://example.com/source' : '',
       retrieved_snippet: 'This is a generated snippet for demonstration purposes. It contains relevant information extracted from the source.',
       confidence_score: Math.floor(Math.random() * 100),
-      created_at: new Date().toISOString(),
-      category: ['Technology', 'Economy', 'Agriculture', 'Labor'][Math.floor(Math.random() * 4)],
-      verified: Math.random() > 0.5
+      created_at: new Date().toISOString()
     }
     
     setClaims(prev => [newClaim, ...prev])
@@ -248,7 +222,6 @@ export default function DemoClaimsLedgerPage() {
   // Statistics
   const stats = {
     total: claims.length,
-    verified: claims.filter(c => c.verified).length,
     withSource: claims.filter(c => c.source_url).length,
     highConfidence: claims.filter(c => c.confidence_score >= 80).length,
     avgConfidence: claims.length > 0 ? claims.reduce((sum, c) => sum + c.confidence_score, 0) / claims.length : 0
@@ -336,14 +309,6 @@ export default function DemoClaimsLedgerPage() {
           <ClaimsLedgerTable
             claims={claims}
             loading={loading}
-            showSearch={true}
-            showFilter={true}
-            showExport={true}
-            showPagination={true}
-            itemsPerPage={5}
-            onClaimClick={handleClaimClick}
-            onSourceClick={handleSourceClick}
-            onExport={handleExport}
           />
         </TabsContent>
 
@@ -456,13 +421,13 @@ export default function DemoClaimsLedgerPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Verified Claims</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CardTitle className="text-sm font-medium">Total Claims</CardTitle>
+                <CheckCircle className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.verified}</div>
+                <div className="text-2xl font-bold">{stats.total}</div>
                 <p className="text-xs text-muted-foreground">
-                  {((stats.verified / stats.total) * 100).toFixed(1)}% of total
+                  Claims in the ledger
                 </p>
               </CardContent>
             </Card>

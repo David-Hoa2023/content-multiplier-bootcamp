@@ -450,7 +450,7 @@ export default function MarkdownEditor({
         onChange={(val) => onChange(val || '')}
         preview="edit"
         hideToolbar={false}
-        visibleDragBar={false}
+        visibleDragbar={false}
         height={height}
         commands={editorCommands}
         extraCommands={editorExtraCommands}

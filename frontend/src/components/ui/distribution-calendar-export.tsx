@@ -394,7 +394,6 @@ export function DistributionCalendarExport({
                       <TableHead className="w-12">
                         <Checkbox
                           checked={isAllSelected}
-                          indeterminate={isSomeSelected}
                           onCheckedChange={handleSelectAll}
                         />
                       </TableHead>
@@ -498,7 +497,11 @@ export function DistributionCalendarExport({
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      onClick={() => handleExportCSV([item])}
+                                      onClick={() => {
+                                        selectedItems.clear()
+                                        selectedItems.add(item.id!)
+                                        handleExportCSV(true)
+                                      }}
                                     >
                                       <FileSpreadsheet className="h-3 w-3" />
                                     </Button>
@@ -511,7 +514,11 @@ export function DistributionCalendarExport({
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      onClick={() => handleExportICS([item])}
+                                      onClick={() => {
+                                        selectedItems.clear()
+                                        selectedItems.add(item.id!)
+                                        handleExportICS(true)
+                                      }}
                                     >
                                       <Calendar className="h-3 w-3" />
                                     </Button>
