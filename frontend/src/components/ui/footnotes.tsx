@@ -110,7 +110,7 @@ export function Footnotes({
             <AccordionItem 
               key={citation.id} 
               value={citation.id}
-              ref={(el) => (footnoteRefs.current[citation.id] = el)}
+              ref={(el) => { footnoteRefs.current[citation.id] = el; }}
               className={cn(
                 'transition-all duration-300',
                 highlightedCitation === citation.id && 'bg-primary/5 border-primary/20 rounded-lg'
