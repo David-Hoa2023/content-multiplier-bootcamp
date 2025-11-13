@@ -1,9 +1,0 @@
-{
-    "scripts": {
-        "seed": "ts-node --transpile-only scripts/seed.ts"
-    },
-    "devDependencies": {
-        "ts-node": "^10.9.2",
-        "typescript": "^5.6.3"
-    }
-}
