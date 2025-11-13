@@ -1,0 +1,42 @@
+{
+  "name": "idea-management-app",
+  "version": "1.0.0",
+  "description": "Full-Stack Idea Management Application with AI Integration",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "scripts": {
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm ci",
+    "install:frontend": "cd frontend && npm ci",
+    "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
+    "start": "bash start.sh",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "postinstall": "npm run install:all && npm run build"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/David-Hoa2023/content-multiplier-bootcamp.git"
+  },
+  "keywords": [
+    "idea-management",
+    "content-generation",
+    "ai-integration",
+    "fastify",
+    "nextjs",
+    "postgresql"
+  ],
+  "author": "David Hoa",
+  "license": "MIT"
+}

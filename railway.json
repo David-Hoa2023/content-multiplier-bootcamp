@@ -1,0 +1,26 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "nixpacks",
+    "buildCommand": "cd backend && npm ci && cd ../frontend && npm ci && npm run build"
+  },
+  "deploy": {
+    "startCommand": "bash start.sh",
+    "restartPolicyType": "on-failure",
+    "restartPolicyMaxRetries": 10
+  },
+  "services": [
+    {
+      "name": "idea-management-app",
+      "environments": {
+        "production": {
+          "PORT": 4000,
+          "NODE_ENV": "production",
+          "DATABASE_URL": "${{DATABASE_URL}}",
+          "FRONTEND_URL": "https://${{RAILWAY_STATIC_URL}}",
+          "BACKEND_URL": "https://${{RAILWAY_STATIC_URL}}"
+        }
+      }
+    }
+  ]
+}
