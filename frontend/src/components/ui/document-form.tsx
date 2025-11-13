@@ -36,7 +36,7 @@ const documentSchema = z.object({
   title: z.string().min(1, 'Tiêu đề không được để trống'),
   author: z.string().optional(),
   published_date: z.date().optional(),
-  tags: z.array(z.string()).default([]),
+  tags: z.array(z.string()),
   content: z.string().min(10, 'Nội dung phải có ít nhất 10 ký tự'),
   file: z.any().optional(), // Use z.any() instead of z.instanceof(File)
 })
@@ -90,15 +90,15 @@ export function DocumentForm({
 
   const addTag = () => {
     const trimmedTag = tagInput.trim()
-    if (trimmedTag && !form.getValues('tags').includes(trimmedTag)) {
-      const currentTags = form.getValues('tags')
+    const currentTags = form.getValues('tags') || []
+    if (trimmedTag && !currentTags.includes(trimmedTag)) {
       form.setValue('tags', [...currentTags, trimmedTag])
       setTagInput('')
     }
   }
 
   const removeTag = (tagToRemove: string) => {
-    const currentTags = form.getValues('tags')
+    const currentTags = form.getValues('tags') || []
     form.setValue('tags', currentTags.filter(tag => tag !== tagToRemove))
   }
 
