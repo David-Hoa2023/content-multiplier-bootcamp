@@ -1,5 +1,5 @@
-# Use Node.js 18 Alpine for smaller image
-FROM node:18-alpine
+# syntax=docker/dockerfile:1.6
+FROM node:18-alpine AS deps
 
 # Install bash (required for start.sh)
 RUN apk add --no-cache bash
@@ -7,20 +7,19 @@ RUN apk add --no-cache bash
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json files
+# --- Backend deps ---
 COPY backend/package.json backend/package-lock.json ./backend/
-COPY frontend/package.json frontend/package-lock.json ./frontend/
-COPY package.json ./
-
-# Install dependencies
 RUN cd backend && npm ci --omit=dev
+
+# --- Frontend deps ---
+COPY frontend/package.json frontend/package-lock.json ./frontend/
 RUN cd frontend && npm ci --omit=dev
 
-# Copy source code
-COPY backend/src/ ./backend/src/
-COPY backend/tsconfig.json ./backend/
+# Copy the rest of source code AFTER deps are cached
+COPY backend/ ./backend/
 COPY frontend/ ./frontend/
 COPY start.sh ./start.sh
+COPY package.json ./
 
 # Build frontend
 RUN cd frontend && npm run build
