@@ -28,7 +28,7 @@ export const PromptTemplateLibrary: React.FC<PromptTemplateLibraryProps> = ({ te
   const contentTypes: ContentType[] = ['idea', 'brief', 'draft', 'derivative', 'citation']
   
   const uniquePersonas = useMemo(() => {
-    const personas = [...new Set(templates.map(template => template.persona))]
+    const personas = Array.from(new Set(templates.map(template => template.persona)))
     return personas.sort()
   }, [templates])
 

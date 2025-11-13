@@ -159,48 +159,56 @@ export function Sidebar({
               const isActive = pathname === item.href || 
                 (item.href !== '/' && pathname.startsWith(item.href))
               
-              return (
-                <Tooltip key={item.name} disabled={!isCollapsed || mobile}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground relative',
-                        isActive 
-                          ? 'bg-accent text-accent-foreground shadow-sm border-l-2 border-primary' 
-                          : 'text-muted-foreground hover:text-foreground',
-                        isCollapsed && !mobile && 'justify-center px-2'
+              const linkContent = (
+                <Link
+                  href={item.href}
+                  className={cn(
+                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground relative',
+                    isActive 
+                        ? 'bg-accent text-accent-foreground shadow-sm border-l-2 border-primary' 
+                        : 'text-muted-foreground hover:text-foreground',
+                      isCollapsed && !mobile && 'justify-center px-2'
+                    )}
+                  >
+                    <item.icon className={cn(
+                      "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
+                      isActive && "text-primary"
+                    )} />
+                    
+                    <AnimatePresence>
+                      {(!isCollapsed || mobile) && (
+                        <motion.div
+                          initial="collapsed"
+                          animate="expanded"
+                          exit="collapsed"
+                          variants={contentVariants}
+                          className="flex-1 flex items-center justify-between min-w-0"
+                        >
+                          <span className="truncate">{item.name}</span>
+                          {item.badge && (
+                            <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground font-medium">
+                              {item.badge}
+                            </span>
+                          )}
+                        </motion.div>
                       )}
-                    >
-                      <item.icon className={cn(
-                        "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
-                        isActive && "text-primary"
-                      )} />
-                      
-                      <AnimatePresence>
-                        {(!isCollapsed || mobile) && (
-                          <motion.div
-                            initial="collapsed"
-                            animate="expanded"
-                            exit="collapsed"
-                            variants={contentVariants}
-                            className="flex-1 flex items-center justify-between min-w-0"
-                          >
-                            <span className="truncate">{item.name}</span>
-                            {item.badge && (
-                              <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground font-medium">
-                                {item.badge}
-                              </span>
-                            )}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                    </AnimatePresence>
 
-                      {/* Active indicator for collapsed state */}
-                      {isCollapsed && !mobile && isActive && (
-                        <div className="absolute -right-1 top-1/2 h-4 w-1 -translate-y-1/2 rounded-l bg-primary" />
-                      )}
-                    </Link>
+                    {/* Active indicator for collapsed state */}
+                    {isCollapsed && !mobile && isActive && (
+                      <div className="absolute -right-1 top-1/2 h-4 w-1 -translate-y-1/2 rounded-l bg-primary" />
+                    )}
+                  </Link>
+              )
+
+              if (!isCollapsed || mobile) {
+                return <div key={item.name}>{linkContent}</div>
+              }
+
+              return (
+                <Tooltip key={item.name}>
+                  <TooltipTrigger asChild>
+                    {linkContent}
                   </TooltipTrigger>
                   <TooltipContent side="right" className="font-medium">
                     <div className="space-y-1">
@@ -258,8 +266,8 @@ export function Sidebar({
 
         {/* Logout Button */}
         {onLogout && (
-          <Tooltip disabled={!isCollapsed || mobile}>
-            <TooltipTrigger asChild>
+          <>
+            {(!isCollapsed || mobile) ? (
               <Button
                 variant="ghost"
                 size="sm"
@@ -284,11 +292,27 @@ export function Sidebar({
                   )}
                 </AnimatePresence>
               </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              Đăng xuất
-            </TooltipContent>
-          </Tooltip>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onLogout}
+                    className={cn(
+                      "w-full text-muted-foreground hover:text-foreground transition-all duration-200",
+                      isCollapsed && !mobile ? "px-2" : "justify-start"
+                    )}
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  Đăng xuất
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </>
         )}
       </div>
     </div>

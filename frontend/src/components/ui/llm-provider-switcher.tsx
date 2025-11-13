@@ -247,7 +247,19 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
   }
 
   const handleProviderChange = (providerId: string) => {
-    const models = Object.keys(PROVIDERS[providerId as keyof typeof PROVIDERS].models)
+    if (!(providerId in PROVIDERS)) {
+      console.error(`Unknown provider: ${providerId}`)
+      return
+    }
+    
+    const selectedProvider = PROVIDERS[providerId as keyof typeof PROVIDERS];
+    const models = Object.keys(selectedProvider.models)
+    
+    if (models.length === 0) {
+      console.error(`No models available for provider: ${providerId}`)
+      return
+    }
+    
     const newProvider: SelectedProvider = {
       provider: providerId,
       model: models[0] // Select first model by default
@@ -257,15 +269,17 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
     onChange?.(newProvider)
     savePreferences(newProvider)
     
-    const selectedProvider = PROVIDERS[providerId as keyof typeof PROVIDERS];
-    const firstModelKey = models[0] as keyof typeof selectedProvider.models;
-    const firstModel = selectedProvider.models[firstModelKey];
+    const firstModelKey = models[0];
+    const modelsObj = selectedProvider.models as Record<string, { name: string; description: string; speed: string; cost: string; contextLength: string; costPerToken: number }>;
+    const firstModel = modelsObj[firstModelKey];
     
-    toast({
-      title: "Provider changed",
-      description: `Switched to ${selectedProvider.name} - ${firstModel.name}`,
-      duration: 2000,
-    })
+    if (firstModel) {
+      toast({
+        title: "Provider changed",
+        description: `Switched to ${selectedProvider.name} - ${firstModel.name}`,
+        duration: 2000,
+      })
+    }
   }
 
   const handleModelChange = (modelId: string) => {
@@ -280,13 +294,16 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
     savePreferences(newProvider)
     
     const providerInfo = PROVIDERS[localProvider.provider as keyof typeof PROVIDERS]
-    const modelInfo = providerInfo.models[modelId as keyof typeof providerInfo.models]
+    const modelsObj = providerInfo.models as Record<string, { name: string; description: string; speed: string; cost: string; contextLength: string; costPerToken: number }>;
+    const modelInfo = modelsObj[modelId];
     
-    toast({
-      title: "Model changed",
-      description: `Switched to ${modelInfo.name}`,
-      duration: 2000,
-    })
+    if (modelInfo) {
+      toast({
+        title: "Model changed",
+        description: `Switched to ${modelInfo.name}`,
+        duration: 2000,
+      })
+    }
   }
 
   const setDefaultForTask = (taskType: string, provider: SelectedProvider) => {
@@ -355,7 +372,8 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
   }
 
   const currentProviderInfo = localProvider ? PROVIDERS[localProvider.provider as keyof typeof PROVIDERS] : null
-  const currentModelInfo = currentProviderInfo && localProvider ? currentProviderInfo.models[localProvider.model as keyof typeof currentProviderInfo.models] : null
+  const currentModelInfo = currentProviderInfo && localProvider ? 
+    (currentProviderInfo.models as Record<string, { name: string; description: string; speed: string; cost: string; contextLength: string; costPerToken: number }>)[localProvider.model] : null
   const ProviderIcon = currentProviderInfo?.icon
 
   return (

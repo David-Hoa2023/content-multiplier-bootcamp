@@ -77,7 +77,7 @@ export function MultiPublishQueue({
       await onPublish(idsToPublish)
       
       // Mark as published
-      setPublishedIds(new Set([...publishedIds, ...idsToPublish]))
+      setPublishedIds(new Set(Array.from(publishedIds).concat(Array.from(idsToPublish))))
       setSelectedIds(new Set())
     } catch (error) {
       console.error('Failed to publish:', error)

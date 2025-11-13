@@ -60,7 +60,7 @@ const formSchema = z.object({
     .min(1, "Ngành nghề là bắt buộc"),
   status: z
     .enum(['draft', 'selected', 'archived'], {
-      required_error: "Trạng thái là bắt buộc",
+      message: "Trạng thái là bắt buộc",
     }),
 })
 
@@ -117,7 +117,7 @@ const contentVariants = {
     scale: 1,
     y: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 300,
       damping: 30
     }

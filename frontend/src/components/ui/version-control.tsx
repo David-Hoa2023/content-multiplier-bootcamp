@@ -22,6 +22,7 @@ export interface Version {
     characterCount?: number
     wordCount?: number
     changes?: string
+    platform?: string
   }
 }
 

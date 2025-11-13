@@ -83,7 +83,7 @@ export function SchedulingModal({
 
     // Validate all selected derivatives have scheduled times
     const scheduleData: ScheduleData[] = []
-    for (const derivativeId of selectedDerivatives) {
+    for (const derivativeId of Array.from(selectedDerivatives)) {
       const scheduledTime = scheduleTimes[derivativeId]
       if (!scheduledTime) {
         toast({
@@ -156,7 +156,7 @@ export function SchedulingModal({
 
   // Get unique platforms from derivatives
   const getAvailablePlatforms = () => {
-    return [...new Set(derivatives.map(d => d.platform))]
+    return Array.from(new Set(derivatives.map(d => d.platform)))
   }
 
   // Filter derivatives based on selected platforms
