@@ -109,6 +109,7 @@ WORDPRESS_SITE_URL=your-wordpress-site
    - **Build command**: `npm run build`
    - **Build output directory**: `.next`
    - **Root directory**: `idea-management-app/frontend`
+   - **Note**: Do NOT use OpenNext adapter - Cloudflare Pages supports Next.js natively. The `output: 'standalone'` has been removed from next.config.js for Cloudflare compatibility.
 
 ### 3.2 Configure Environment Variables
 

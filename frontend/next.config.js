@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone',
+  // Remove 'standalone' output for Cloudflare Pages compatibility
+  // Cloudflare Pages supports standard Next.js builds natively
   
   // Environment variables
   env: {
