@@ -35,7 +35,7 @@ const SkeletonItem: React.FC<SkeletonItemProps> = ({
       transition={{ 
         duration: 0.4, 
         delay: delay,
-        ease: "easeOut" 
+        ease: "easeOut" as const 
       }}
       className={className}
     >
@@ -270,7 +270,7 @@ export const DerivativeSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) 
           transition={{ 
             duration: 0.4, 
             delay: index * 0.1,
-            ease: "easeOut" 
+            ease: "easeOut" as const 
           }}
         >
           <Card className="overflow-hidden">

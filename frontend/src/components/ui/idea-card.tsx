@@ -123,7 +123,7 @@ export function IdeaCard({
       }}
       transition={{ 
         duration: 0.2,
-        ease: "easeOut"
+        ease: "easeOut" as const
       }}
       className={cn("group", className)}
     >

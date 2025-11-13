@@ -55,7 +55,7 @@ const DefaultIllustration = () => (
       transition={{ 
         duration: 4, 
         repeat: Infinity, 
-        ease: "easeInOut" 
+        ease: "easeInOut" as const 
       }}
       className="absolute inset-0 opacity-20"
     >
@@ -69,7 +69,7 @@ const DefaultIllustration = () => (
       transition={{ 
         duration: 3, 
         repeat: Infinity, 
-        ease: "easeInOut" 
+        ease: "easeInOut" as const 
       }}
       className="relative z-10"
     >
@@ -116,7 +116,7 @@ const containerVariants = {
     scale: 1,
     transition: {
       duration: 0.6,
-      ease: "easeOut",
+      ease: "easeOut" as const,
       staggerChildren: 0.1
     }
   }
@@ -132,10 +132,10 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: "easeOut"
+      ease: "easeOut" as const
     }
   }
-}
+} as const
 
 export function EmptyState({
   title,
@@ -307,7 +307,7 @@ export const EmptyDerivatives = (props: Omit<EmptyStateProps, 'icon'>) => (
           transition={{ 
             duration: 4, 
             repeat: Infinity, 
-            ease: "easeInOut" 
+            ease: "easeInOut" as const 
           }}
           className="absolute inset-0 opacity-20"
         >
@@ -320,7 +320,7 @@ export const EmptyDerivatives = (props: Omit<EmptyStateProps, 'icon'>) => (
           transition={{ 
             duration: 3, 
             repeat: Infinity, 
-            ease: "easeInOut" 
+            ease: "easeInOut" as const 
           }}
           className="relative z-10"
         >

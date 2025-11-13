@@ -180,7 +180,7 @@ export function RefreshMaterializedViewButton({
             >
               <motion.div
                 animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
-                transition={isLoading ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
+                transition={isLoading ? { duration: 1, repeat: Infinity, ease: "linear" as const } : {}}
               >
                 <RefreshCcw className="h-4 w-4" />
               </motion.div>
@@ -231,7 +231,7 @@ export function RefreshMaterializedViewButton({
           {isLoading ? (
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" as const }}
             >
               <RefreshCcw className="h-3 w-3 text-blue-500" />
             </motion.div>

@@ -75,14 +75,14 @@ const sidebarVariants = {
     width: 240,
     transition: {
       duration: 0.3,
-      ease: "easeInOut"
+      ease: "easeInOut" as const
     }
   },
   collapsed: {
     width: 64,
     transition: {
       duration: 0.3,
-      ease: "easeInOut"
+      ease: "easeInOut" as const
     }
   }
 }
