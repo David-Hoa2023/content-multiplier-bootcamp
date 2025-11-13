@@ -6,21 +6,7 @@
   },
   "deploy": {
     "startCommand": "bash start.sh",
-    "restartPolicyType": "on-failure",
+    "restartPolicyType": "always",
     "restartPolicyMaxRetries": 10
-  },
-  "services": [
-    {
-      "name": "idea-management-app",
-      "environments": {
-        "production": {
-          "PORT": 4000,
-          "NODE_ENV": "production",
-          "DATABASE_URL": "${{DATABASE_URL}}",
-          "FRONTEND_URL": "https://${{RAILWAY_STATIC_URL}}",
-          "BACKEND_URL": "https://${{RAILWAY_STATIC_URL}}"
-        }
-      }
-    }
-  ]
+  }
 }
