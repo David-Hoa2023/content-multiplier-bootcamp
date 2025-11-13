@@ -1,15 +1,10 @@
 # Cloudflare Pages Configuration
-name = "content-multiplier-frontend"
-compatibility_date = "2024-01-15"
+# Note: For GitHub-based deployments, configure these settings in Cloudflare Pages dashboard
 
-[build]
-command = "npm run build"
-cwd = "/"
-watch_dir = "src"
-
-[build.environment]
-NODE_VERSION = "18"
-NPM_VERSION = "9"
-
-[[build.environment_variables]]
-NODE_ENV = "production"
+# Recommended Cloudflare Pages Settings:
+# Framework preset: Next.js
+# Build command: npm run build
+# Build output directory: out
+# Root directory: idea-management-app/frontend  
+# Node.js version: 18
+# Environment variables: NODE_ENV=production

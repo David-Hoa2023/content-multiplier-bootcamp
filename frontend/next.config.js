@@ -3,8 +3,10 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Remove 'standalone' output for Cloudflare Pages compatibility
-  // Cloudflare Pages supports standard Next.js builds natively
+  
+  // Static export for Cloudflare Pages
+  output: 'export',
+  trailingSlash: true,
   
   // Environment variables
   env: {

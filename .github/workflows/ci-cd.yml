@@ -1,0 +1,44 @@
+name: CI/CD Workflow
+
+on:
+  # CI: chạy khi có Pull Request vào nhánh main
+  pull_request:
+    branches:
+      - main
+  # CD: chạy khi có Push vào nhánh main
+  push:
+    branches:
+      - main
+
+jobs:
+  # Job CI: chạy kiểm thử
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+  # Job CD: triển khai
+  deploy:
+    needs: test   # chỉ chạy deploy nếu job test thành công
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        run: |
+          echo "Triển khai ứng dụng..."
+          # Ví dụ: dùng rsync hoặc ssh để copy code lên server
+          # rsync -avz . user@server:/var/www/app
