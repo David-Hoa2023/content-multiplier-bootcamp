@@ -257,9 +257,13 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
     onChange?.(newProvider)
     savePreferences(newProvider)
     
+    const selectedProvider = PROVIDERS[providerId as keyof typeof PROVIDERS];
+    const firstModelKey = models[0] as keyof typeof selectedProvider.models;
+    const firstModel = selectedProvider.models[firstModelKey];
+    
     toast({
       title: "Provider changed",
-      description: `Switched to ${PROVIDERS[providerId as keyof typeof PROVIDERS].name} - ${PROVIDERS[providerId as keyof typeof PROVIDERS].models[models[0] as any].name}`,
+      description: `Switched to ${selectedProvider.name} - ${firstModel.name}`,
       duration: 2000,
     })
   }
