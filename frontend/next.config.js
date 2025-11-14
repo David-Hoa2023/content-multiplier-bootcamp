@@ -4,8 +4,8 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
 
-  // Static export for Cloudflare Pages - disabled for local development
-  // output: 'export',
+  // Static export for Cloudflare Pages
+  output: 'export',
   trailingSlash: true,
   
   // Environment variables

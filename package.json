@@ -8,11 +8,12 @@
     "npm": ">=9.0.0"
   },
   "scripts": {
-    "install:all": "bun run install:backend && bun run install:frontend",
-    "install:backend": "cd backend && bun install",
-    "install:frontend": "cd frontend && bun install",
-    "build": "bun run build:frontend",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "build": "npm run build:frontend",
     "build:frontend": "cd frontend && npm run build",
+    "build:cloudflare": "bash build-cloudflare.sh",
     "start": "bash start.sh",
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend && npm start",

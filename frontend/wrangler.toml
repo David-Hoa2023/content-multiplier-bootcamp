@@ -2,9 +2,13 @@
 # Note: For GitHub-based deployments, configure these settings in Cloudflare Pages dashboard
 
 # Recommended Cloudflare Pages Settings:
-# Framework preset: Next.js
-# Build command: npm run build
-# Build output directory: out
-# Root directory: idea-management-app/frontend  
-# Node.js version: 18
+# Framework preset: Next.js (Static HTML Export)
+# Build command: npm run build:cloudflare
+# Build output directory: frontend/out
+# Root directory: (leave as repository root)
+# Node.js version: 18.17.0
 # Environment variables: NODE_ENV=production
+
+# IMPORTANT: This is a monorepo with npm workspaces
+# Do NOT set root directory to /frontend - keep it at repository root
+# The build command handles the workspace structure correctly
