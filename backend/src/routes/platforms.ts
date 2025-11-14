@@ -2,29 +2,35 @@ import { FastifyPluginAsync } from 'fastify'
 import pool from '../db'
 import { PlatformRegistry, createPlatform } from '../platforms/registry'
 import { PlatformConfig } from '../platforms/base/BasePlatform'
+import { 
+  PlatformCredentialsService, 
+  PlatformCredentials,
+  PlatformConfig as PlatformConfigWithCredentials
+} from '../services/platformCredentialsService'
 
 interface CreatePlatformConfigRequest {
   platform_type: string
   platform_name: string
   configuration: Record<string, any>
-  credentials?: Record<string, any>
+  credentials?: PlatformCredentials
   test_connection?: boolean
 }
 
 interface UpdatePlatformConfigRequest {
   platform_name?: string
   configuration?: Record<string, any>
-  credentials?: Record<string, any>
+  credentials?: PlatformCredentials
   is_active?: boolean
 }
 
 interface TestConnectionRequest {
   platform_type: string
   configuration: Record<string, any>
-  credentials?: Record<string, any>
+  credentials?: PlatformCredentials
 }
 
 const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
+  const credentialsService = new PlatformCredentialsService(pool);
   
   // Get all supported platforms and their capabilities
   fastify.get('/platforms/supported', async (request, reply) => {
@@ -79,7 +85,7 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
     }
   })
 
-  // Get all platform configurations for user
+  // Get all platform configurations for user (without credentials)
   fastify.get('/platforms/configurations', async (request, reply) => {
     try {
       const { platform_type, is_active } = request.query as { 
@@ -87,32 +93,15 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
         is_active?: boolean 
       }
       
-      let query = `
-        SELECT id, platform_type, platform_name, configuration, 
-               is_active, is_connected, last_tested_at, test_result,
-               created_at, updated_at
-        FROM platform_configurations 
-        WHERE user_id = $1
-      `
-      const params = [1] // Default user for now
-      
-      if (platform_type) {
-        query += ` AND platform_type = $${params.length + 1}`
-        params.push(platform_type)
-      }
-      
-      if (is_active !== undefined) {
-        query += ` AND is_active = $${params.length + 1}`
-        params.push(is_active)
-      }
-      
-      query += ' ORDER BY platform_type, platform_name'
-      
-      const result = await pool.query(query, params)
+      const configs = await credentialsService.getPlatformConfigs({
+        platform_type,
+        is_active,
+        user_id: 1 // Default user for now
+      });
       
       return {
         success: true,
-        data: result.rows
+        data: configs
       }
     } catch (error) {
       fastify.log.error(error)
@@ -123,21 +112,18 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
     }
   })
 
-  // Get single platform configuration
+  // Get single platform configuration (without credentials for security)
   fastify.get('/platforms/configurations/:id', async (request, reply) => {
     const { id } = request.params as { id: string }
     
     try {
-      const result = await pool.query(
-        `SELECT id, platform_type, platform_name, configuration, 
-                is_active, is_connected, last_tested_at, test_result,
-                created_at, updated_at
-         FROM platform_configurations 
-         WHERE id = $1 AND user_id = $2`,
-        [id, 1]
-      )
+      const configs = await credentialsService.getPlatformConfigs({
+        user_id: 1 // Default user for now
+      });
       
-      if (result.rows.length === 0) {
+      const config = configs.find(c => c.id === parseInt(id));
+      
+      if (!config) {
         return reply.status(404).send({
           success: false,
           error: 'Platform configuration not found'
@@ -146,7 +132,7 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
       
       return {
         success: true,
-        data: result.rows[0]
+        data: config
       }
     } catch (error) {
       fastify.log.error(error)
@@ -176,6 +162,18 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
         })
       }
 
+      // Validate credentials if provided
+      if (credentials) {
+        const validation = credentialsService.validateCredentials(platform_type, credentials);
+        if (!validation.valid) {
+          return reply.status(400).send({
+            success: false,
+            error: 'Invalid credentials provided',
+            details: `Missing required fields: ${validation.missing.join(', ')}`
+          });
+        }
+      }
+
       // Create platform instance and validate configuration
       const platform = createPlatform(platform_type)
       const config: PlatformConfig = {
@@ -200,7 +198,7 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
       let testResult = 'Not tested'
 
       // Test connection if requested
-      if (test_connection) {
+      if (test_connection && credentials) {
         try {
           const testResponse = await platform.testConnection(config)
           isConnected = testResponse.success
@@ -210,35 +208,20 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
         }
       }
 
-      // Store credentials as JSON (in production, consider encryption)
-      let credentialsToStore = null
-      if (credentials) {
-        credentialsToStore = credentials
-      }
+      // Store configuration with encrypted credentials
+      const configToStore: PlatformConfigWithCredentials = {
+        platform_type,
+        platform_name,
+        configuration,
+        credentials,
+        is_active: true,
+        is_connected: isConnected,
+        last_tested_at: test_connection ? new Date() : undefined,
+        test_result: testResult,
+        user_id: 1 // Default user
+      };
 
-      // Insert into database
-      const result = await pool.query(
-        `INSERT INTO platform_configurations 
-         (user_id, platform_type, platform_name, configuration, credentials, 
-          is_active, is_connected, last_tested_at, test_result)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING *`,
-        [
-          1, // Default user
-          platform_type,
-          platform_name,
-          configuration,
-          credentialsToStore,
-          true,
-          isConnected,
-          test_connection ? new Date() : null,
-          testResult
-        ]
-      )
-
-      const created = result.rows[0]
-      // Don't return encrypted credentials
-      delete created.credentials
+      const created = await credentialsService.storePlatformConfig(configToStore);
 
       return {
         success: true,
@@ -260,73 +243,46 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
     const updates = request.body as UpdatePlatformConfigRequest
     
     try {
-      // Get existing configuration
-      const existing = await pool.query(
-        'SELECT * FROM platform_configurations WHERE id = $1 AND user_id = $2',
-        [id, 1]
-      )
-      
-      if (existing.rows.length === 0) {
-        return reply.status(404).send({
-          success: false,
-          error: 'Platform configuration not found'
-        })
-      }
-
-      const current = existing.rows[0]
-
-      // Build update query
-      const updateFields = []
-      const params = []
-      let paramIndex = 1
-
-      if (updates.platform_name) {
-        updateFields.push(`platform_name = $${paramIndex}`)
-        params.push(updates.platform_name)
-        paramIndex++
-      }
-
-      if (updates.configuration) {
-        updateFields.push(`configuration = $${paramIndex}`)
-        params.push(updates.configuration)
-        paramIndex++
-      }
-
+      // Validate credentials if provided
       if (updates.credentials) {
-        updateFields.push(`credentials = $${paramIndex}`)
-        params.push(updates.credentials)
-        paramIndex++
+        // First need to get the platform type to validate credentials
+        const existing = await credentialsService.getPlatformConfigs({ user_id: 1 });
+        const existingConfig = existing.find(c => c.id === parseInt(id));
+        
+        if (!existingConfig) {
+          return reply.status(404).send({
+            success: false,
+            error: 'Platform configuration not found'
+          });
+        }
+
+        const validation = credentialsService.validateCredentials(existingConfig.platform_type, updates.credentials);
+        if (!validation.valid) {
+          return reply.status(400).send({
+            success: false,
+            error: 'Invalid credentials provided',
+            details: `Missing required fields: ${validation.missing.join(', ')}`
+          });
+        }
       }
 
-      if (updates.is_active !== undefined) {
-        updateFields.push(`is_active = $${paramIndex}`)
-        params.push(updates.is_active)
-        paramIndex++
-      }
-
-      updateFields.push(`updated_at = NOW()`)
-      
-      params.push(id)
-      const whereClause = `WHERE id = $${paramIndex} AND user_id = ${1}`
-
-      const query = `
-        UPDATE platform_configurations 
-        SET ${updateFields.join(', ')}
-        ${whereClause}
-        RETURNING id, platform_type, platform_name, configuration, 
-                  is_active, is_connected, last_tested_at, test_result,
-                  created_at, updated_at
-      `
-
-      const result = await pool.query(query, params)
+      const updated = await credentialsService.updatePlatformConfig(parseInt(id), updates);
 
       return {
         success: true,
-        data: result.rows[0],
+        data: updated,
         message: 'Platform configuration updated successfully'
       }
-    } catch (error) {
+    } catch (error: any) {
       fastify.log.error(error)
+      
+      if (error.message === 'Platform configuration not found') {
+        return reply.status(404).send({
+          success: false,
+          error: 'Platform configuration not found'
+        });
+      }
+      
       return reply.status(500).send({
         success: false,
         error: 'Failed to update platform configuration'
@@ -375,41 +331,41 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
     const { id } = request.params as { id: string }
     
     try {
-      // Get configuration with credentials
-      const result = await pool.query(
-        'SELECT * FROM platform_configurations WHERE id = $1 AND user_id = $2',
-        [id, 1]
-      )
+      // Get configuration with encrypted credentials
+      const config = await credentialsService.getPlatformConfigWithCredentials(parseInt(id));
       
-      if (result.rows.length === 0) {
+      if (!config) {
         return reply.status(404).send({
           success: false,
           error: 'Platform configuration not found'
-        })
+        });
       }
 
-      const config = result.rows[0]
-      
-      // Get credentials directly from JSON field
-      const credentials = config.credentials || null
+      if (!config.credentials) {
+        return reply.status(400).send({
+          success: false,
+          error: 'No credentials configured for this platform'
+        });
+      }
 
-      const platform = createPlatform(config.platform_type)
+      const platform = createPlatform(config.platform_type);
       const platformConfig: PlatformConfig = {
         id: config.id,
         platform_type: config.platform_type,
         platform_name: config.platform_name,
         configuration: config.configuration,
-        credentials,
+        credentials: config.credentials,
         is_active: config.is_active
-      }
+      };
 
-      const testResult = await platform.testConnection(platformConfig)
+      const testResult = await platform.testConnection(platformConfig);
 
       // Update test result in database
-      await pool.query(
-        'UPDATE platform_configurations SET is_connected = $1, last_tested_at = NOW(), test_result = $2 WHERE id = $3',
-        [testResult.success, testResult.message || 'Test completed', id]
-      )
+      await credentialsService.updateTestResults(
+        parseInt(id),
+        testResult.success,
+        testResult.message || 'Test completed'
+      );
 
       return {
         success: true,
@@ -429,16 +385,13 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
     const { id } = request.params as { id: string }
     
     try {
-      const result = await pool.query(
-        'DELETE FROM platform_configurations WHERE id = $1 AND user_id = $2 RETURNING id',
-        [id, 1]
-      )
+      const deleted = await credentialsService.deletePlatformConfig(parseInt(id));
       
-      if (result.rows.length === 0) {
+      if (!deleted) {
         return reply.status(404).send({
           success: false,
           error: 'Platform configuration not found'
-        })
+        });
       }
       
       return {
@@ -542,7 +495,7 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
         // Log the publishing event for analytics
         if (platform_config_id) {
           const analyticsQuery = `
-            INSERT INTO platform_analytics (platform_config_id, derivative_id, event_type, occurred_at, metadata)
+            INSERT INTO platform_analytics (platform_config_id, derivative_id, event_type, occurred_at, event_data)
             VALUES ($1, $2, 'content_published', NOW(), $3)
           `
           await pool.query(analyticsQuery, [
@@ -578,6 +531,74 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
       return reply.status(500).send({
         success: false,
         error: 'Failed to publish content'
+      })
+    }
+  })
+
+  // Get published content with analytics
+  fastify.get('/platforms/published-content', async (request, reply) => {
+    try {
+      const query = `
+        SELECT 
+          d.id,
+          d.platform,
+          d.content,
+          d.character_count,
+          d.published_at,
+          d.hashtags,
+          d.mentions,
+          d.media_urls,
+          pc.platform_name,
+          pc.platform_type,
+          pa.event_data,
+          pa.occurred_at as analytics_logged_at,
+          cp.pack_id,
+          b.title as brief_title
+        FROM derivatives d
+        LEFT JOIN platform_configurations pc ON d.platform_config_id = pc.id
+        LEFT JOIN platform_analytics pa ON pa.derivative_id = d.id
+        LEFT JOIN content_plans cpl ON d.content_plan_id = cpl.id
+        LEFT JOIN content_packs cp ON d.pack_id = cp.pack_id::text
+        LEFT JOIN briefs b ON cp.brief_id = b.brief_id
+        WHERE d.status = 'published'
+        ORDER BY d.published_at DESC
+      `;
+
+      const result = await pool.query(query);
+      
+      const publishedContent = result.rows.map(row => ({
+        id: row.id,
+        platform: row.platform,
+        content: row.content,
+        character_count: row.character_count,
+        published_at: row.published_at,
+        hashtags: row.hashtags,
+        mentions: row.mentions,
+        media_urls: row.media_urls,
+        platform_config: {
+          name: row.platform_name,
+          type: row.platform_type
+        },
+        analytics: row.event_data ? {
+          ...row.event_data,
+          logged_at: row.analytics_logged_at
+        } : null,
+        content_pack: {
+          pack_id: row.pack_id,
+          brief_title: row.brief_title
+        }
+      }));
+
+      return {
+        success: true,
+        data: publishedContent,
+        total: publishedContent.length
+      }
+    } catch (error) {
+      fastify.log.error(error)
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to fetch published content'
       })
     }
   })

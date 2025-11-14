@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Anthropic from '@anthropic-ai/sdk';
+import { Pool } from 'pg';
+import { APIKeyService } from './apiKeyService.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -24,26 +26,47 @@ export interface AIGenerationResponse {
   tokensUsed?: number;
 }
 
-// Initialize AI clients
-const openaiClient = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null;
+// Database pool for API key service
+let dbPool: Pool;
+let apiKeyService: APIKeyService;
 
-const geminiClient = process.env.GEMINI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-  : null;
+// Initialize database connection
+export function initializeAIService(pool: Pool) {
+  dbPool = pool;
+  apiKeyService = new APIKeyService(pool);
+}
 
-const anthropicClient = process.env.ANTHROPIC_API_KEY
-  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-  : null;
+// Dynamic client creation functions
+async function getOpenAIClient(): Promise<OpenAI | null> {
+  if (!apiKeyService) return null;
+  
+  const apiKey = process.env.OPENAI_API_KEY || await apiKeyService.getApiKey('openai');
+  return apiKey ? new OpenAI({ apiKey }) : null;
+}
 
-// Deepseek uses OpenAI-compatible API
-const deepseekClient = process.env.DEEPSEEK_API_KEY
-  ? new OpenAI({
-      apiKey: process.env.DEEPSEEK_API_KEY,
-      baseURL: 'https://api.deepseek.com',
-    })
-  : null;
+async function getGeminiClient(): Promise<GoogleGenerativeAI | null> {
+  if (!apiKeyService) return null;
+  
+  const apiKey = process.env.GEMINI_API_KEY || await apiKeyService.getApiKey('gemini');
+  return apiKey ? new GoogleGenerativeAI(apiKey) : null;
+}
+
+async function getAnthropicClient(): Promise<Anthropic | null> {
+  if (!apiKeyService) return null;
+  
+  const apiKey = process.env.ANTHROPIC_API_KEY || await apiKeyService.getApiKey('anthropic');
+  return apiKey ? new Anthropic({ apiKey }) : null;
+}
+
+async function getDeepseekClient(): Promise<OpenAI | null> {
+  if (!apiKeyService) return null;
+  
+  const apiKey = process.env.DEEPSEEK_API_KEY || await apiKeyService.getApiKey('deepseek');
+  return apiKey ? new OpenAI({
+    apiKey,
+    baseURL: 'https://api.deepseek.com',
+  }) : null;
+}
 
 // Default models for each provider
 const DEFAULT_MODELS = {
@@ -94,6 +117,8 @@ async function callOpenAI(
   temperature: number,
   maxTokens: number
 ): Promise<AIGenerationResponse> {
+  const openaiClient = await getOpenAIClient();
+  
   if (!openaiClient) {
     return {
       success: false,
@@ -139,6 +164,8 @@ async function callGemini(
   temperature: number,
   maxTokens: number
 ): Promise<AIGenerationResponse> {
+  const geminiClient = await getGeminiClient();
+  
   if (!geminiClient) {
     return {
       success: false,
@@ -189,6 +216,8 @@ async function callAnthropic(
   temperature: number,
   maxTokens: number
 ): Promise<AIGenerationResponse> {
+  const anthropicClient = await getAnthropicClient();
+  
   if (!anthropicClient) {
     return {
       success: false,
@@ -237,6 +266,8 @@ async function callDeepseek(
   temperature: number,
   maxTokens: number
 ): Promise<AIGenerationResponse> {
+  const deepseekClient = await getDeepseekClient();
+  
   if (!deepseekClient) {
     return {
       success: false,
@@ -311,13 +342,25 @@ export async function generateContent(
 /**
  * Get available providers (based on configured API keys)
  */
-export function getAvailableProviders(): AIProvider[] {
+export async function getAvailableProviders(): Promise<AIProvider[]> {
+  if (!apiKeyService) return [];
+  
   const providers: AIProvider[] = [];
+  const activeProviders = await apiKeyService.getActiveProviders();
 
-  if (openaiClient) providers.push('openai');
-  if (geminiClient) providers.push('gemini');
-  if (anthropicClient) providers.push('anthropic');
-  if (deepseekClient) providers.push('deepseek');
+  // Check both environment variables and database
+  if (process.env.OPENAI_API_KEY || activeProviders.includes('openai')) {
+    providers.push('openai');
+  }
+  if (process.env.GEMINI_API_KEY || activeProviders.includes('gemini')) {
+    providers.push('gemini');
+  }
+  if (process.env.ANTHROPIC_API_KEY || activeProviders.includes('anthropic')) {
+    providers.push('anthropic');
+  }
+  if (process.env.DEEPSEEK_API_KEY || activeProviders.includes('deepseek')) {
+    providers.push('deepseek');
+  }
 
   return providers;
 }

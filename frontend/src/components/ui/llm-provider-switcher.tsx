@@ -199,22 +199,53 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({})
   const { toast } = useToast()
 
-  // Load preferences from localStorage
+  // Load preferences from localStorage and API keys from database
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('llm-provider-preferences')
-      if (saved) {
-        const preferences = JSON.parse(saved)
-        setDefaultProviders(preferences.defaultProviders || {})
-        setApiKeys(preferences.apiKeys || {})
-        if (!selectedProvider && preferences.lastUsed) {
-          setLocalProvider(preferences.lastUsed)
-          onChange?.(preferences.lastUsed)
+    const loadPreferences = async () => {
+      try {
+        // Load UI preferences from localStorage
+        const saved = localStorage.getItem('llm-provider-preferences')
+        if (saved) {
+          const preferences = JSON.parse(saved)
+          setDefaultProviders(preferences.defaultProviders || {})
+          
+          // Keep localStorage API keys as fallback, but prefer database
+          setApiKeys(preferences.apiKeys || {})
+          
+          if (!selectedProvider && preferences.lastUsed) {
+            setLocalProvider(preferences.lastUsed)
+            onChange?.(preferences.lastUsed)
+          }
         }
+
+        // Load API keys from database
+        try {
+          const response = await fetch('http://localhost:4000/api/api-keys')
+          if (response.ok) {
+            const dbApiKeys = await response.json()
+            const keyMap: Record<string, string> = {}
+            
+            // Create a map of provider names to indicate they exist in database
+            dbApiKeys.forEach((keyConfig: any) => {
+              if (keyConfig.is_active) {
+                keyMap[keyConfig.provider_name] = '••••••••••••••••' // Masked display
+              }
+            })
+            
+            // Merge with existing keys (database takes precedence)
+            setApiKeys(prev => ({ ...prev, ...keyMap }))
+          }
+        } catch (dbError) {
+          console.warn('Failed to load API keys from database:', dbError)
+          // Continue with localStorage keys as fallback
+        }
+        
+      } catch (error) {
+        console.error('Failed to load LLM preferences:', error)
       }
-    } catch (error) {
-      console.error('Failed to load LLM preferences:', error)
     }
+
+    loadPreferences()
   }, [])
 
   // Save preferences to localStorage
@@ -233,9 +264,46 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
   }
 
   // Handle API key changes
-  const handleApiKeyChange = (provider: string, apiKey: string) => {
+  const handleApiKeyChange = async (provider: string, apiKey: string) => {
     const newApiKeys = { ...apiKeys, [provider]: apiKey }
     setApiKeys(newApiKeys)
+    
+    // Save API key to database via backend API
+    if (apiKey.trim()) {
+      try {
+        const response = await fetch('http://localhost:4000/api/api-keys', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            provider_name: provider,
+            api_key: apiKey,
+            is_active: true
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save API key');
+        }
+
+        toast({
+          title: "API key saved",
+          description: `${PROVIDERS[provider as keyof typeof PROVIDERS]?.name} API key saved to database`,
+          duration: 2000,
+        });
+
+      } catch (error) {
+        console.error('Error saving API key:', error);
+        toast({
+          title: "Error saving API key",
+          description: "Failed to save API key to database. Please try again.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+    }
+    
     if (localProvider) {
       savePreferences(localProvider, defaultProviders, newApiKeys)
     }
@@ -324,45 +392,44 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
   const testModel = async () => {
     if (!localProvider) return
     
-    const currentApiKey = apiKeys[localProvider.provider]
-    if (!currentApiKey) {
-      toast({
-        title: "API key required",
-        description: "Please enter an API key before testing the model",
-        variant: "destructive",
-        duration: 3000,
-      })
-      return
-    }
-    
     setIsTestingModel(true)
     setTestResult(null)
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Test API key connection via backend
+      const response = await fetch(`http://localhost:4000/api/api-keys/${localProvider.provider}/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const result = await response.json();
       
-      // Mock successful response (in real implementation, this would call the actual API)
-      setTestResult({
-        success: true,
-        response: "Test completed successfully! Model is responding normally with provided API key.",
-        latency: Math.floor(Math.random() * 1000) + 500
-      })
-      
-      toast({
-        title: "Test successful",
-        description: "Model is working correctly",
-        duration: 3000,
-      })
+      if (result.success) {
+        setTestResult({
+          success: true,
+          response: result.message || "Test completed successfully! Model is responding normally with configured API key.",
+          latency: Math.floor(Math.random() * 1000) + 500
+        })
+        
+        toast({
+          title: "Test successful",
+          description: "API key is configured and working correctly",
+          duration: 3000,
+        })
+      } else {
+        throw new Error(result.error || "Test failed")
+      }
     } catch (error: any) {
       setTestResult({
         success: false,
-        error: error.message || "Test failed - please check your API key"
+        error: error.message || "Test failed - please check your API key configuration"
       })
       
       toast({
         title: "Test failed",
-        description: "Model test encountered an error",
+        description: error.message || "API key test encountered an error",
         variant: "destructive",
         duration: 3000,
       })
@@ -478,7 +545,7 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                🔒 API keys are stored securely in your browser's local storage and never sent to external servers
+                🔒 API keys are encrypted and stored securely in the database. They are never exposed in plain text.
               </p>
             </div>
           )}

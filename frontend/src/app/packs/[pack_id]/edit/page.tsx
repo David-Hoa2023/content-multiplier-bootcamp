@@ -11,6 +11,26 @@ import MarkdownEditor from '@/app/components/MarkdownEditor'
 
 const API_URL = 'http://localhost:4000'
 
+// Required for static export with dynamic routes
+export async function generateStaticParams() {
+  try {
+    // Fetch all pack IDs from the API
+    const response = await fetch(`${API_URL}/api/packs`)
+    const result = await response.json()
+    
+    if (result.success && Array.isArray(result.data)) {
+      return result.data.map((pack: any) => ({
+        pack_id: pack.pack_id
+      }))
+    }
+  } catch (error) {
+    console.error('Error fetching packs for static generation:', error)
+  }
+  
+  // Return empty array if no packs found or error occurred
+  return []
+}
+
 interface ContentPack {
   pack_id: string
   brief_id: string

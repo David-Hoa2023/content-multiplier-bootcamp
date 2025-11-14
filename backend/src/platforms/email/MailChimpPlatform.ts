@@ -52,7 +52,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   async authenticate(config: MailChimpConfig): Promise<AuthResult> {
     try {
-      const apiKey = config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
       const dataCenter = this.extractDataCenter(apiKey)
 
       if (!dataCenter) {
@@ -131,7 +131,7 @@ export class MailChimpPlatform extends BasePlatform {
       }
 
       // Then test list access
-      const apiKey = config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
       const dataCenter = this.extractDataCenter(apiKey)
       const listId = config.configuration.listId
 
@@ -205,7 +205,7 @@ export class MailChimpPlatform extends BasePlatform {
       }
 
       // Schedule campaign
-      const apiKey = config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
       const dataCenter = this.extractDataCenter(apiKey)
 
       const scheduleResponse = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${campaign.id}/actions/schedule`, {
@@ -240,7 +240,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   async cancelScheduledContent(scheduleId: string, config: MailChimpConfig): Promise<DeleteResult> {
     try {
-      const apiKey = config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
       const dataCenter = this.extractDataCenter(apiKey)
 
       const response = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${scheduleId}/actions/unschedule`, {
@@ -270,7 +270,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   async getPublishedContent(platformId: string, config: MailChimpConfig): Promise<ContentResult> {
     try {
-      const apiKey = config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
       const dataCenter = this.extractDataCenter(apiKey)
 
       const response = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${platformId}`, {
@@ -320,7 +320,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   async deleteContent(platformId: string, config: MailChimpConfig): Promise<DeleteResult> {
     try {
-      const apiKey = config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
       const dataCenter = this.extractDataCenter(apiKey)
 
       const response = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${platformId}`, {
@@ -359,7 +359,7 @@ export class MailChimpPlatform extends BasePlatform {
   // Platform-specific methods
   private async createCampaign(content: string, config: MailChimpConfig, options?: any): Promise<MailChimpCampaign | null> {
     try {
-      const apiKey = config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
       const dataCenter = this.extractDataCenter(apiKey)
       
       const subject = options?.subject || this.extractSubjectLine(content, config)
@@ -432,7 +432,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   private async sendCampaign(campaignId: string, config: MailChimpConfig): Promise<PublishResult> {
     try {
-      const apiKey = config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
       const dataCenter = this.extractDataCenter(apiKey)
 
       const response = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${campaignId}/actions/send`, {

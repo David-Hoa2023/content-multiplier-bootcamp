@@ -377,15 +377,26 @@ export function PlatformConfigurationModal({
         return (
           <div className="space-y-3">
             <div>
-              <Label>API Key</Label>
+              <Label>MailChimp API Key</Label>
               <Input
                 type={showPassword ? 'text' : 'password'}
-                value={credentials.apiKey || ''}
-                onChange={(e) => handleCredentialChange('apiKey', e.target.value)}
-                placeholder="abc123-us1"
+                value={credentials.mailchimpApiKey || ''}
+                onChange={(e) => handleCredentialChange('mailchimpApiKey', e.target.value)}
+                placeholder="abc123456789abcdef..."
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Format: your-api-key-datacenter (e.g., abc123-us1)
+                Your MailChimp API key (without datacenter suffix)
+              </p>
+            </div>
+            <div>
+              <Label>Server Prefix (Datacenter)</Label>
+              <Input
+                value={credentials.serverPrefix || ''}
+                onChange={(e) => handleCredentialChange('serverPrefix', e.target.value)}
+                placeholder="us1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Your MailChimp datacenter (e.g., us1, us2, us3)
               </p>
             </div>
           </div>

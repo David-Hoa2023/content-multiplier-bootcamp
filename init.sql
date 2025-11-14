@@ -23,6 +23,19 @@ CREATE TABLE IF NOT EXISTS content_plans (
 -- Create index on idea_id for better query performance
 CREATE INDEX IF NOT EXISTS idx_content_plans_idea_id ON content_plans(idea_id);
 
+-- Create api_keys table for secure storage of API keys
+CREATE TABLE IF NOT EXISTS api_keys (
+    id SERIAL PRIMARY KEY,
+    provider_name VARCHAR(50) NOT NULL UNIQUE,
+    api_key_encrypted TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create index on provider_name for better query performance
+CREATE INDEX IF NOT EXISTS idx_api_keys_provider_name ON api_keys(provider_name);
+
 -- Insert sample data
 INSERT INTO ideas (title, description, persona, industry, status) VALUES
 ('Social Media Campaign', 'Tạo chiến dịch marketing trên social media cho sản phẩm mới', 'Marketing Manager', 'Technology', 'draft'),

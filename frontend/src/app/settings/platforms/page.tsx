@@ -228,13 +228,19 @@ export default function PlatformSettingsPage() {
           description: editingConfig ? 'Đã cập nhật cấu hình' : 'Đã tạo cấu hình mới'
         })
       } else {
-        throw new Error(result.error)
+        // Show specific backend error message
+        toast({
+          title: 'Lỗi cấu hình',
+          description: result.details || result.error || 'Cấu hình không hợp lệ',
+          variant: 'destructive'
+        })
+        return
       }
     } catch (error) {
       console.error('Error saving configuration:', error)
       toast({
         title: 'Lỗi',
-        description: 'Không thể lưu cấu hình',
+        description: 'Không thể lưu cấu hình - Lỗi kết nối',
         variant: 'destructive'
       })
     }

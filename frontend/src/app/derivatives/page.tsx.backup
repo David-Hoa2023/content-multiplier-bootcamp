@@ -334,8 +334,22 @@ export default function DerivativesPage() {
     try {
       setScheduling(true)
       
-      const derivative_ids = scheduleData.map(item => item.derivative_id)
-      const scheduled_times = scheduleData.map(item => item.scheduled_time)
+      // Filter schedule data to only include selected derivatives
+      const filteredScheduleData = scheduleData.filter(item => 
+        selectedDerivatives.includes(item.derivative_id)
+      )
+      
+      if (filteredScheduleData.length === 0) {
+        toast({
+          title: 'Không có nội dung nào được chọn',
+          description: 'Vui lòng chọn ít nhất một nội dung để lên lịch.',
+          variant: 'destructive'
+        })
+        return
+      }
+      
+      const derivative_ids = filteredScheduleData.map(item => item.derivative_id)
+      const scheduled_times = filteredScheduleData.map(item => item.scheduled_time)
       
       const response = await fetch(`${API_URL}/derivatives/schedule`, {
         method: 'POST',
@@ -385,7 +399,7 @@ export default function DerivativesPage() {
 
   // Select all derivatives
   const selectAllDerivatives = () => {
-    const allIds = derivatives.filter(d => d.id && (!d.status || d.status !== 'published')).map(d => d.id!)
+    const allIds = derivatives.filter(d => d.id && d.status !== 'published').map(d => d.id!)
     setSelectedDerivatives(allIds)
   }
 
@@ -397,6 +411,7 @@ export default function DerivativesPage() {
   // Publish derivatives to real platforms
   const publishToRealPlatforms = async (derivativeIds?: number[]) => {
     const idsToPublish = derivativeIds || selectedDerivatives
+    
     if (idsToPublish.length === 0) {
       toast({
         title: 'Không có nội dung nào được chọn',
@@ -687,25 +702,18 @@ export default function DerivativesPage() {
               <CardContent>
                 {derivatives.length > 0 ? (
                   <>
-                    {/* Debug Info - remove after testing */}
-                    <div className="p-2 bg-yellow-50 rounded text-xs mb-2 border">
-                      Debug: {derivatives.length} derivatives total, 
-                      {derivatives.filter(d => d.id).length} with IDs, 
-                      {derivatives.filter(d => !d.status || d.status !== 'published').length} selectable
-                    </div>
-                    
                     {/* Selection Controls */}
                     <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg mb-4">
                       <div className="flex items-center gap-4">
                         <div className="text-sm font-medium">
-                          {selectedDerivatives.length} / {derivatives.filter(d => !d.status || d.status !== 'published').length} được chọn
+                          {selectedDerivatives.length} / {derivatives.filter(d => d.status !== 'published').length} được chọn
                         </div>
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={selectAllDerivatives}
-                            disabled={derivatives.filter(d => !d.status || d.status !== 'published').length === 0}
+                            disabled={derivatives.filter(d => d.status !== 'published').length === 0}
                           >
                             Chọn tất cả
                           </Button>
@@ -753,32 +761,21 @@ export default function DerivativesPage() {
                               {/* Checkbox for this platform's derivative */}
                               {(() => {
                                 const derivative = derivatives.find(d => d.platform === config.platform)
-                                if (derivative?.id) {
+                                if (derivative?.id && derivative.status !== 'published') {
                                   const isSelected = selectedDerivatives.includes(derivative.id)
-                                  const isPublished = derivative.status === 'published'
                                   return (
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => !isPublished && toggleDerivativeSelection(derivative.id!)}
+                                      onClick={() => toggleDerivativeSelection(derivative.id!)}
                                       className="p-1 h-auto"
-                                      disabled={isPublished}
                                     >
-                                      {isPublished ? (
-                                        <CheckSquare className="h-4 w-4 text-gray-400" />
-                                      ) : isSelected ? (
+                                      {isSelected ? (
                                         <CheckSquare className="h-4 w-4 text-green-600" />
                                       ) : (
                                         <Square className="h-4 w-4 text-muted-foreground" />
                                       )}
                                     </Button>
-                                  )
-                                } else if (derivatives.find(d => d.platform === config.platform)) {
-                                  // Show checkbox even for derivatives without IDs (newly generated)
-                                  return (
-                                    <div className="p-1 h-auto flex items-center">
-                                      <Square className="h-4 w-4 text-gray-300" />
-                                    </div>
                                   )
                                 }
                                 return null
@@ -852,7 +849,7 @@ export default function DerivativesPage() {
                                    supportedPlatforms.find(sp => sp.name === config.platform)?.type === cp.platform_type)
                                 )
                                 
-                                if (derivative?.id && derivative.status !== 'published' && (hasValidConfig || ['Twitter', 'LinkedIn', 'Facebook', 'Instagram', 'TikTok'].includes(config.platform))) {
+                                if (derivative?.id && derivative.status !== 'published' && (hasValidConfig || ['Twitter', 'LinkedIn', 'Facebook', 'Instagram', 'TikTok', 'MailChimp'].includes(config.platform))) {
                                   return (
                                     <Button
                                       variant="outline"
@@ -1037,7 +1034,7 @@ export default function DerivativesPage() {
         <SchedulingModal
           open={schedulingModalOpen}
           onOpenChange={setSchedulingModalOpen}
-          derivatives={derivatives}
+          derivatives={derivatives.filter(d => d.id && selectedDerivatives.includes(d.id))}
           configuredPlatforms={configuredPlatforms}
           onSchedule={handleSchedulePublishing}
         />
