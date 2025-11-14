@@ -447,7 +447,10 @@ export default function MarkdownEditor({
       </Dialog>
       <MDEditor
         value={value}
-        onChange={(val) => onChange(val || '')}
+        onChange={(val) => {
+          console.log('📝 MDEditor onChange triggered, value:', val?.substring(0, 50))
+          onChange(val || '')
+        }}
         preview="edit"
         hideToolbar={false}
         visibleDragbar={false}

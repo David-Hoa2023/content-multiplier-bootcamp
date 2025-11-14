@@ -3,9 +3,9 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
-  // Static export for Cloudflare Pages
-  output: 'export',
+
+  // Static export for Cloudflare Pages - disabled for local development
+  // output: 'export',
   trailingSlash: true,
   
   // Environment variables

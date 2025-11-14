@@ -86,3 +86,8 @@ backend/uploads/*
 frontend/.next/
 frontend/out/
 
+# TypeScript type checking logs
+typecheck-*.log
+typecheck-all.log
+scripts/node_modules
+

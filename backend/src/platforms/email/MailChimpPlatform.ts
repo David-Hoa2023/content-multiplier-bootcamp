@@ -50,9 +50,17 @@ export class MailChimpPlatform extends BasePlatform {
     videoFormats: []
   }
 
+  // Helper method to construct full API key from credentials
+  private getFullApiKey(config: MailChimpConfig): string {
+    const apiKeyBase = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
+    const serverPrefix = config.credentials?.serverPrefix || config.configuration.dataCenter
+
+    return apiKeyBase && serverPrefix ? `${apiKeyBase}-${serverPrefix}` : (apiKeyBase || '')
+  }
+
   async authenticate(config: MailChimpConfig): Promise<AuthResult> {
     try {
-      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = this.getFullApiKey(config)
       const dataCenter = this.extractDataCenter(apiKey)
 
       if (!dataCenter) {
@@ -92,12 +100,25 @@ export class MailChimpPlatform extends BasePlatform {
     const errors: string[] = []
     const warnings: string[] = []
 
-    // Required fields validation
-    const requiredFields = ['apiKey', 'listId', 'fromName', 'fromEmail', 'replyTo']
-    errors.push(...this.validateRequired(config.configuration, requiredFields))
+    // Get API key components
+    const apiKeyBase = config.credentials?.mailchimpApiKey || config.configuration.apiKey
+    const serverPrefix = config.credentials?.serverPrefix || config.configuration.dataCenter
+    const fullApiKey = this.getFullApiKey(config)
+
+    // Required fields validation for credentials
+    if (!apiKeyBase) {
+      errors.push('apiKey is required')
+    }
+    if (!serverPrefix) {
+      errors.push('serverPrefix (datacenter) is required')
+    }
+
+    // Required fields validation for configuration
+    const requiredConfigFields = ['listId', 'fromName', 'fromEmail', 'replyTo']
+    errors.push(...this.validateRequired(config.configuration, requiredConfigFields))
 
     // API key format validation
-    if (config.configuration.apiKey && !this.extractDataCenter(config.configuration.apiKey)) {
+    if (fullApiKey && !this.extractDataCenter(fullApiKey)) {
       errors.push('API key must be in format: key-datacenter (e.g., abc123-us1)')
     }
 
@@ -131,7 +152,7 @@ export class MailChimpPlatform extends BasePlatform {
       }
 
       // Then test list access
-      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = this.getFullApiKey(config)
       const dataCenter = this.extractDataCenter(apiKey)
       const listId = config.configuration.listId
 
@@ -205,7 +226,7 @@ export class MailChimpPlatform extends BasePlatform {
       }
 
       // Schedule campaign
-      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = this.getFullApiKey(config)
       const dataCenter = this.extractDataCenter(apiKey)
 
       const scheduleResponse = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${campaign.id}/actions/schedule`, {
@@ -240,7 +261,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   async cancelScheduledContent(scheduleId: string, config: MailChimpConfig): Promise<DeleteResult> {
     try {
-      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = this.getFullApiKey(config)
       const dataCenter = this.extractDataCenter(apiKey)
 
       const response = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${scheduleId}/actions/unschedule`, {
@@ -270,7 +291,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   async getPublishedContent(platformId: string, config: MailChimpConfig): Promise<ContentResult> {
     try {
-      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = this.getFullApiKey(config)
       const dataCenter = this.extractDataCenter(apiKey)
 
       const response = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${platformId}`, {
@@ -320,7 +341,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   async deleteContent(platformId: string, config: MailChimpConfig): Promise<DeleteResult> {
     try {
-      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = this.getFullApiKey(config)
       const dataCenter = this.extractDataCenter(apiKey)
 
       const response = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${platformId}`, {
@@ -359,7 +380,7 @@ export class MailChimpPlatform extends BasePlatform {
   // Platform-specific methods
   private async createCampaign(content: string, config: MailChimpConfig, options?: any): Promise<MailChimpCampaign | null> {
     try {
-      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = this.getFullApiKey(config)
       const dataCenter = this.extractDataCenter(apiKey)
       
       const subject = options?.subject || this.extractSubjectLine(content, config)
@@ -432,7 +453,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   private async sendCampaign(campaignId: string, config: MailChimpConfig): Promise<PublishResult> {
     try {
-      const apiKey = config.credentials?.mailchimpApiKey || config.credentials?.apiKey || config.configuration.apiKey
+      const apiKey = this.getFullApiKey(config)
       const dataCenter = this.extractDataCenter(apiKey)
 
       const response = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${campaignId}/actions/send`, {

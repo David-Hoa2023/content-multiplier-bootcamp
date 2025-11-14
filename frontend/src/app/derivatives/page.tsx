@@ -455,7 +455,15 @@ export default function DerivativesPage() {
       if (publishedCount > 0) {
         toast({
           title: 'Xuất bản thành công',
-          description: `Đã xuất bản ${publishedCount} nội dung${failedCount > 0 ? `, ${failedCount} thất bại` : ''}.`
+          description: `Đã xuất bản ${publishedCount} nội dung${failedCount > 0 ? `, ${failedCount} thất bại` : ''}. Xem analytics để theo dõi hiệu suất.`,
+          action: (
+            <button
+              onClick={() => router.push('/analytics')}
+              className="text-sm underline"
+            >
+              Xem Analytics
+            </button>
+          )
         })
       } else if (failedCount > 0) {
         toast({
@@ -544,15 +552,25 @@ export default function DerivativesPage() {
               Tạo và quản lý các biến thể nội dung từ content packs đã được duyệt
             </p>
           </div>
-          {selectedPack && derivatives.length > 0 && (
+          <div className="flex gap-2">
             <Button
-              onClick={openInPublisher}
+              onClick={() => router.push('/analytics')}
+              variant="outline"
               className="flex items-center gap-2"
             >
-              <Send className="h-4 w-4" />
-              Mở trong Publisher
+              <BarChart3 className="h-4 w-4" />
+              Xem Analytics
             </Button>
-          )}
+            {selectedPack && derivatives.length > 0 && (
+              <Button
+                onClick={openInPublisher}
+                className="flex items-center gap-2"
+              >
+                <Send className="h-4 w-4" />
+                Mở trong Publisher
+              </Button>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -733,7 +751,7 @@ export default function DerivativesPage() {
                     </div>
                     
                     <Tabs defaultValue={activePlatform} onValueChange={(v) => setActivePlatform(v as Platform)}>
-                    <TabsList className={`grid w-full ${platforms.length <= 5 ? `grid-cols-${platforms.length}` : 'grid-cols-5'}`}>
+                    <TabsList className={`grid w-full ${platforms.length <= 6 ? `grid-cols-${platforms.length}` : 'grid-cols-6'}`}>
                       {platforms.map(p => (
                         <TabsTrigger key={p.platform} value={p.platform}>
                           {p.platform}

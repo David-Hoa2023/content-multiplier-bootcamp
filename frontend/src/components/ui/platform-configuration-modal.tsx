@@ -377,7 +377,7 @@ export function PlatformConfigurationModal({
         return (
           <div className="space-y-3">
             <div>
-              <Label>MailChimp API Key</Label>
+              <Label>MailChimp API Key <span className="text-red-500">*</span></Label>
               <Input
                 type={showPassword ? 'text' : 'password'}
                 value={credentials.mailchimpApiKey || ''}
@@ -389,7 +389,7 @@ export function PlatformConfigurationModal({
               </p>
             </div>
             <div>
-              <Label>Server Prefix (Datacenter)</Label>
+              <Label>Server Prefix (Datacenter) <span className="text-red-500">*</span></Label>
               <Input
                 value={credentials.serverPrefix || ''}
                 onChange={(e) => handleCredentialChange('serverPrefix', e.target.value)}
@@ -398,6 +398,53 @@ export function PlatformConfigurationModal({
               <p className="text-xs text-muted-foreground mt-1">
                 Your MailChimp datacenter (e.g., us1, us2, us3)
               </p>
+            </div>
+
+            <div className="border-t pt-3 mt-4">
+              <h4 className="font-medium mb-3 text-sm">Email Configuration (Required)</h4>
+
+              <div className="space-y-3">
+                <div>
+                  <Label>List ID (Audience ID) <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={configuration.listId || ''}
+                    onChange={(e) => handleConfigurationChange('listId', e.target.value)}
+                    placeholder="abc123def4"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Find this in MailChimp: Audience → Settings → Audience ID
+                  </p>
+                </div>
+
+                <div>
+                  <Label>From Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={configuration.fromName || ''}
+                    onChange={(e) => handleConfigurationChange('fromName', e.target.value)}
+                    placeholder="Your Company"
+                  />
+                </div>
+
+                <div>
+                  <Label>From Email <span className="text-red-500">*</span></Label>
+                  <Input
+                    type="email"
+                    value={configuration.fromEmail || ''}
+                    onChange={(e) => handleConfigurationChange('fromEmail', e.target.value)}
+                    placeholder="marketing@yourcompany.com"
+                  />
+                </div>
+
+                <div>
+                  <Label>Reply To Email <span className="text-red-500">*</span></Label>
+                  <Input
+                    type="email"
+                    value={configuration.replyTo || ''}
+                    onChange={(e) => handleConfigurationChange('replyTo', e.target.value)}
+                    placeholder="noreply@yourcompany.com"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )

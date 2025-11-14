@@ -99,19 +99,21 @@ export class PlatformCredentialsService {
    */
   async storePlatformConfig(config: PlatformConfig): Promise<PlatformConfig> {
     let encryptedCredentials = null;
-    
+
     if (config.credentials) {
-      encryptedCredentials = encryptCredentials(config.credentials);
+      const encrypted = encryptCredentials(config.credentials);
+      // Wrap encrypted string in JSON object for JSONB column
+      encryptedCredentials = JSON.stringify({ encrypted });
     }
-    
+
     const query = `
-      INSERT INTO platform_configurations 
-      (user_id, platform_type, platform_name, configuration, credentials, 
+      INSERT INTO platform_configurations
+      (user_id, platform_type, platform_name, configuration, credentials,
        is_active, is_connected, last_tested_at, test_result)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
-    
+
     const result = await this.db.query(query, [
       config.user_id || 1, // Default user
       config.platform_type,
@@ -158,7 +160,9 @@ export class PlatformCredentialsService {
     }
 
     if (updates.credentials) {
-      const encryptedCredentials = encryptCredentials(updates.credentials);
+      const encrypted = encryptCredentials(updates.credentials);
+      // Wrap encrypted string in JSON object for JSONB column
+      const encryptedCredentials = JSON.stringify({ encrypted });
       updateFields.push(`credentials = $${paramIndex}`);
       params.push(encryptedCredentials);
       paramIndex++;
@@ -225,10 +229,14 @@ export class PlatformCredentialsService {
 
     const config = result.rows[0];
     let credentials = null;
-    
+
     if (config.credentials) {
       try {
-        credentials = decryptCredentials(config.credentials);
+        // Unwrap the JSON object to get the encrypted string
+        const encryptedString = typeof config.credentials === 'string'
+          ? config.credentials
+          : config.credentials.encrypted;
+        credentials = decryptCredentials(encryptedString);
       } catch (error) {
         console.error('Failed to decrypt credentials for platform config:', id, error);
         // Continue without credentials rather than failing entirely

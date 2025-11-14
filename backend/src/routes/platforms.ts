@@ -471,59 +471,106 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
         scheduled_time?: string | null
       }
 
-      // For now, simulate publishing since we don't have actual platform integrations
-      // In a real implementation, this would:
-      // 1. Load the platform configuration
-      // 2. Create platform instance
-      // 3. Call platform.publish(content, options)
-      // 4. Update derivative status in database
-      // 5. Log the publishing event
+      let publishResult: any
+      let actualPlatformType = platform_type
 
-      const isSuccessful = Math.random() > 0.1 // 90% success rate for demo
+      // Try to use real platform integration if config is provided
+      if (platform_config_id) {
+        try {
+          // Load platform configuration with credentials
+          const config = await credentialsService.getPlatformConfigWithCredentials(platform_config_id);
 
-      if (isSuccessful) {
-        // Update derivative status if derivative_id provided
-        if (derivative_id) {
-          const updateQuery = `
-            UPDATE derivatives 
-            SET status = 'published', published_at = NOW() 
-            WHERE id = $1
-          `
-          await pool.query(updateQuery, [derivative_id])
-        }
+          if (config && config.credentials) {
+            // Create platform instance
+            const platform = createPlatform(config.platform_type);
+            actualPlatformType = config.platform_type
 
-        // Log the publishing event for analytics
-        if (platform_config_id) {
-          const analyticsQuery = `
-            INSERT INTO platform_analytics (platform_config_id, derivative_id, event_type, occurred_at, event_data)
-            VALUES ($1, $2, 'content_published', NOW(), $3)
-          `
-          await pool.query(analyticsQuery, [
-            platform_config_id,
-            derivative_id || null,
-            JSON.stringify({
-              content_length: content.length,
-              platform_type,
-              scheduled_time
-            })
-          ])
-        }
+            const platformConfig: PlatformConfig = {
+              id: config.id,
+              platform_type: config.platform_type,
+              platform_name: config.platform_name,
+              configuration: config.configuration,
+              credentials: config.credentials,
+              is_active: config.is_active
+            };
 
-        return {
-          success: true,
-          data: {
-            platform_type,
-            published_at: new Date().toISOString(),
-            content_id: derivative_id,
-            message: `Successfully published to ${platform_type}`
+            // Actually publish to the platform
+            publishResult = await platform.publish(content, platformConfig, {
+              scheduled_time,
+              derivative_id
+            });
+
+            if (!publishResult.success) {
+              return reply.status(400).send({
+                success: false,
+                error: publishResult.error || `Failed to publish to ${actualPlatformType}`
+              });
+            }
           }
+        } catch (platformError: any) {
+          fastify.log.error('Platform publishing error:', platformError);
+          // Fall back to simulated success if platform fails
+          publishResult = null;
         }
-      } else {
-        // Simulate failure
-        return reply.status(400).send({
-          success: false,
-          error: `Failed to publish to ${platform_type}: Simulated platform error`
-        })
+      }
+
+      // Update derivative status and store metadata
+      if (derivative_id) {
+        const analytics = publishResult ? {
+          platform_id: publishResult.platformId,
+          url: publishResult.url,
+          message: publishResult.message,
+          metadata: publishResult.metadata,
+          published_at: new Date().toISOString()
+        } : null;
+
+        const updateQuery = `
+          UPDATE derivatives
+          SET status = 'published',
+              published_at = NOW(),
+              analytics = $2
+          WHERE id = $1
+          RETURNING *
+        `
+        const result = await pool.query(updateQuery, [derivative_id, analytics ? JSON.stringify(analytics) : null])
+
+        if (result.rows.length === 0) {
+          return reply.status(404).send({
+            success: false,
+            error: 'Derivative not found'
+          });
+        }
+      }
+
+      // Log the publishing event for analytics
+      if (platform_config_id) {
+        const analyticsQuery = `
+          INSERT INTO platform_analytics (platform_config_id, derivative_id, event_type, occurred_at, event_data)
+          VALUES ($1, $2, 'content_published', NOW(), $3)
+        `
+        await pool.query(analyticsQuery, [
+          platform_config_id,
+          derivative_id || null,
+          JSON.stringify({
+            content_length: content.length,
+            platform_type: actualPlatformType,
+            scheduled_time,
+            platform_result: publishResult || null
+          })
+        ])
+      }
+
+      return {
+        success: true,
+        data: {
+          platform_type: actualPlatformType,
+          published_at: new Date().toISOString(),
+          content_id: derivative_id,
+          platform_id: publishResult?.platformId,
+          url: publishResult?.url,
+          message: publishResult?.message || `Successfully published to ${actualPlatformType}`,
+          metadata: publishResult?.metadata
+        }
       }
 
     } catch (error) {

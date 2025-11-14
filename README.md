@@ -167,35 +167,122 @@ Frontend sẽ chạy ở `http://localhost:3000`
 
 ## 🎨 Sử dụng ứng dụng
 
-### Workflow: Ideas → Briefs → Content Packs → Chỉnh sửa → Duyệt → Derivatives → Xuất bản
+### 🔄 Complete Content Workflow
 
-1. **Tạo Ideas (Ý tưởng)**
+```
+💡 Ideas → 📄 Briefs → 📦 Content Packs → ✏️ Chỉnh sửa → ✅ Duyệt → 🔀 Derivatives → 🚀 Xuất bản
+```
+
+**Visual Flow:**
+```
+┌─────────────┐
+│   Ideas     │  Generate ideas manually or with AI
+│     💡      │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│   Briefs    │  Create detailed content briefs
+│     📄      │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│Content Packs│  AI generates draft content (SSE streaming)
+│     📦      │  Status: 'draft'
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Chỉnh sửa   │  Edit with Markdown editor
+│     ✏️      │  Real-time preview & auto-save
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│   Duyệt     │  Approve content
+│     ✅      │  Status: 'draft' → 'approved'
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Derivatives │  Generate platform-specific variants
+│     🔀      │  Optimize for each platform
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Xuất bản    │  Publish to multiple platforms
+│     🚀      │  Schedule & track performance
+└─────────────┘
+```
+
+#### 1. **Ideas (Ý tưởng)** 💡
    - Mở `http://localhost:3000`
-   - Tab "Ý tưởng": Tạo ý tưởng mới hoặc generate với AI
+   - Tab "Ideas": Tạo ý tưởng mới hoặc generate với AI
    - Điền thông tin: Tiêu đề, Mô tả, Persona, Ngành nghề, Trạng thái
+   - **Navigation**: Ideas → Content Plans
 
-2. **Tạo Content Plans (Kế hoạch nội dung)**
-   - Tab "Kế hoạch nội dung": Xem danh sách kế hoạch
-   - Click vào ý tưởng để generate kế hoạch với AI
-   - Xem chi tiết kế hoạch với thông tin đầy đủ
-
-3. **Tạo Briefs**
+#### 2. **Briefs** 📄
    - Từ trang chi tiết content plan, click "Tạo Brief từ kế hoạch này"
    - Brief sẽ được tạo tự động từ thông tin kế hoạch
    - Xem danh sách briefs tại `/briefs`
    - Click vào brief để xem chi tiết với markdown rendering
-   - Xóa brief bằng icon dustbin ở góc phải mỗi card
+   - Copy content to clipboard hoặc xóa brief
+   - **Navigation**: Briefs → Content Packs
 
-4. **Platform Configuration & Distribution**
-   - Truy cập `/settings` để configure các platform (Twitter, Facebook, LinkedIn, etc.)
-   - Nhập credentials cho từng platform và test connection
-   - Từ brief detail, click "Tạo Content Pack từ brief"
-   - Generate derivatives cho multiple platforms với content được tối ưu
-   - Schedule và publish nội dung lên các platform đã configure
+#### 3. **Content Packs (Bản thảo)** 📦
+   - Từ brief detail, click "Tạo Content Pack"
+   - AI sẽ generate draft content với SSE streaming
+   - Xem real-time generation progress
+   - Draft content được lưu tự động
+   - Xem danh sách content packs tại `/drafts`
+   - **Navigation**: Content Packs → Chỉnh sửa
 
-5. **Analytics & Monitoring**
+#### 4. **Chỉnh sửa (Edit)** ✏️
+   - Route: `/packs/[pack_id]/edit`
+   - Markdown editor với live preview
+   - Auto-save khi có thay đổi
+   - Hiển thị workflow navigation
+   - Hiển thị pack info: word count, status, timestamps
+   - Button "Lưu" để save thay đổi manual
+   - **Navigation**: Chỉnh sửa → Duyệt & Tiếp tục
+
+#### 5. **Duyệt (Approval)** ✅
+   - Click "Duyệt & Tiếp tục" button
+   - Tự động save pending changes
+   - Update pack status từ 'draft' → 'approved'
+   - Redirect tự động đến Derivatives page
+   - **Navigation**: Duyệt → Derivatives
+
+#### 6. **Derivatives (Biến thể nội dung)** 🔀
+   - Route: `/derivatives?pack_id=[pack_id]`
+   - Generate platform-specific content variants
+   - Content được tối ưu cho từng platform:
+     - Character limits (Twitter: 280, LinkedIn: 3000, etc.)
+     - Hashtags và mentions
+     - Formatting và style
+   - Preview content trước khi publish
+   - **Navigation**: Derivatives → Xuất bản
+
+#### 7. **Xuất bản (Publishing)** 🚀
+   - Lên lịch đăng tự động (scheduling)
+   - Publish đồng loạt lên multiple platforms
+   - Real-time publishing status
+   - Error handling và retry logic
+   - **Platforms**: Twitter, Facebook, LinkedIn, Instagram, TikTok, MailChimp, WordPress
+
+#### 8. **Platform Configuration** ⚙️
+   - Route: `/settings`
+   - Configure credentials cho từng platform
+   - Test connection real-time
+   - Manage active/inactive platforms
+   - View configuration status
+
+#### 9. **Analytics & Monitoring** 📊
    - Xem performance analytics của từng platform
-   - Track engagement metrics và reach
+   - Track engagement metrics (likes, shares, comments)
+   - Monitor reach và impressions
    - Optimize content strategy based on data
 
 ## 📂 Cấu trúc thư mục
@@ -346,18 +433,45 @@ docker-compose down -v
 - Machine learning for content optimization
 - Deploy lên production (Vercel, Railway, etc.)
 
-## 🔄 Workflow Navigation
+## 🔄 Workflow Navigation System
 
-Ứng dụng hỗ trợ workflow navigation giữa các bước:
-- **Ideas** → Tạo và quản lý ý tưởng
-- **Briefs** → Tạo brief từ content plan
-- **Content Packs** → Tạo content pack từ brief
-- **Chỉnh sửa** → Chỉnh sửa nội dung
-- **Duyệt** → Duyệt nội dung
-- **Derivatives** → Tạo các biến thể nội dung
-- **Xuất bản** → Xuất bản lên các platform
+Ứng dụng có **on-page workflow navigation** hiển thị trên các trang chính:
 
-Mỗi trang hiển thị workflow steps với bước hiện tại được highlight.
+### Visual Workflow Indicator
+Mỗi trang hiển thị workflow steps với:
+- **Completed steps**: Dimmed (opacity-50)
+- **Current step**: Highlighted với background color
+- **Upcoming steps**: Normal opacity
+- **Arrow indicators**: Shows flow direction
+
+### Key Workflow Pages
+
+#### `/drafts` - Content Packs List
+- Hiển thị tất cả content packs với status
+- Filter by status: draft, approved, published
+- Quick actions: Edit, Create Derivatives
+- Stats dashboard: Total, Draft, Approved, Published
+
+#### `/packs/[pack_id]/edit` - Edit Page
+- Markdown editor với live preview
+- Workflow navigation card
+- "Duyệt & Tiếp tục" button:
+  - Auto-saves pending changes
+  - Updates status to 'approved'
+  - Navigates to derivatives page
+- Back to Drafts navigation
+
+#### Sidebar Navigation
+- **Drafts** section highlighted when on:
+  - `/drafts` - List page
+  - `/packs/[pack_id]/edit` - Edit page
+- Maintains context across the editing workflow
+
+### Breadcrumbs
+Consistent breadcrumb navigation:
+```
+Dashboard → Drafts → Chỉnh sửa nội dung
+```
 
 ---
 

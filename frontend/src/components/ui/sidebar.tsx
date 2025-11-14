@@ -4,16 +4,17 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Lightbulb, 
-  FileText, 
-  Pen, 
-  Settings, 
+import {
+  Lightbulb,
+  FileText,
+  Pen,
+  Settings,
   Menu,
   X,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  BarChart3
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -43,28 +44,34 @@ interface SidebarProps {
 }
 
 const navigationItems: NavigationItem[] = [
-  { 
-    name: 'Ideas', 
-    href: '/', 
+  {
+    name: 'Ideas',
+    href: '/',
     icon: Lightbulb,
     description: 'Quản lý ý tưởng nội dung'
   },
-  { 
-    name: 'Briefs', 
-    href: '/briefs', 
+  {
+    name: 'Briefs',
+    href: '/briefs',
     icon: FileText,
     description: 'Tạo và quản lý briefs'
   },
-  { 
-    name: 'Drafts', 
-    href: '/drafts', 
+  {
+    name: 'Drafts',
+    href: '/drafts',
     icon: Pen,
     badge: 3,
     description: 'Bản thảo đang soạn'
   },
-  { 
-    name: 'Settings', 
-    href: '/settings', 
+  {
+    name: 'Analytics',
+    href: '/analytics',
+    icon: BarChart3,
+    description: 'Xem phân tích và hiệu suất'
+  },
+  {
+    name: 'Settings',
+    href: '/settings',
     icon: Settings,
     description: 'Cài đặt ứng dụng'
   },
@@ -156,9 +163,11 @@ export function Sidebar({
         <nav className="space-y-1">
           <TooltipProvider delayDuration={0}>
             {navigationItems.map((item) => {
-              const isActive = pathname === item.href || 
-                (item.href !== '/' && pathname.startsWith(item.href))
-              
+              // Special handling: highlight "Drafts" when on /packs routes (edit pages)
+              const isActive = pathname === item.href ||
+                (item.href !== '/' && pathname.startsWith(item.href)) ||
+                (item.href === '/drafts' && pathname.startsWith('/packs'))
+
               const linkContent = (
                 <Link
                   href={item.href}

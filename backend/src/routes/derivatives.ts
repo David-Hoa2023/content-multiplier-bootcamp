@@ -253,23 +253,128 @@ const derivativesRoutes: FastifyPluginAsync = async (fastify, opts) => {
     }
   })
 
-  // Delete derivative
-  fastify.delete('/derivatives/:id', async (request, reply) => {
+  // Get published derivatives with analytics
+  fastify.get('/derivatives/published', async (request, reply) => {
+    try {
+      const result = await pool.query(`
+        SELECT d.*,
+               cp.plan_content,
+               cp.target_audience,
+               b.title as brief_title
+        FROM derivatives d
+        LEFT JOIN content_plans cp ON d.content_plan_id = cp.id
+        LEFT JOIN content_packs p ON d.pack_id = p.pack_id
+        LEFT JOIN briefs b ON p.brief_id = b.brief_id
+        WHERE d.status = 'published'
+        ORDER BY d.published_at DESC
+      `)
+
+      return {
+        success: true,
+        data: result.rows,
+        count: result.rows.length
+      }
+    } catch (error) {
+      fastify.log.error(error)
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to fetch published derivatives'
+      })
+    }
+  })
+
+  // Get analytics summary
+  fastify.get('/derivatives/analytics/summary', async (request, reply) => {
+    try {
+      const result = await pool.query(`
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'published') as total_published,
+          COUNT(*) FILTER (WHERE status = 'scheduled') as total_scheduled,
+          COUNT(*) FILTER (WHERE status = 'draft') as total_draft,
+          COUNT(DISTINCT platform) as platforms_used,
+          COUNT(DISTINCT pack_id) as content_packs_used
+        FROM derivatives
+      `)
+
+      const platformBreakdown = await pool.query(`
+        SELECT
+          platform,
+          COUNT(*) FILTER (WHERE status = 'published') as published_count,
+          COUNT(*) FILTER (WHERE status = 'scheduled') as scheduled_count,
+          COUNT(*) FILTER (WHERE status = 'draft') as draft_count
+        FROM derivatives
+        GROUP BY platform
+        ORDER BY published_count DESC
+      `)
+
+      return {
+        success: true,
+        data: {
+          summary: result.rows[0],
+          platformBreakdown: platformBreakdown.rows
+        }
+      }
+    } catch (error) {
+      fastify.log.error(error)
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to fetch analytics summary'
+      })
+    }
+  })
+
+  // Get analytics for specific derivative
+  fastify.get('/derivatives/:id/analytics', async (request, reply) => {
     const { id } = request.params as { id: string }
-    
+
     try {
       const result = await pool.query(
-        'DELETE FROM derivatives WHERE id = $1 RETURNING id',
+        `SELECT d.*,
+                cp.plan_content,
+                cp.target_audience
+         FROM derivatives d
+         LEFT JOIN content_plans cp ON d.content_plan_id = cp.id
+         WHERE d.id = $1`,
         [id]
       )
-      
+
       if (result.rows.length === 0) {
         return reply.status(404).send({
           success: false,
           error: 'Derivative not found'
         })
       }
-      
+
+      return {
+        success: true,
+        data: result.rows[0]
+      }
+    } catch (error) {
+      fastify.log.error(error)
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to fetch derivative analytics'
+      })
+    }
+  })
+
+  // Delete derivative
+  fastify.delete('/derivatives/:id', async (request, reply) => {
+    const { id } = request.params as { id: string }
+
+    try {
+      const result = await pool.query(
+        'DELETE FROM derivatives WHERE id = $1 RETURNING id',
+        [id]
+      )
+
+      if (result.rows.length === 0) {
+        return reply.status(404).send({
+          success: false,
+          error: 'Derivative not found'
+        })
+      }
+
       return {
         success: true,
         message: 'Derivative deleted successfully'

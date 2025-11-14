@@ -19,7 +19,25 @@
     "dev": "npm run dev:backend & npm run dev:frontend",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
-    "postinstall": "bun run install:all"
+    "typecheck": "npm run typecheck:backend && npm run typecheck:frontend && npm run typecheck:api && npm run typecheck:web",
+    "typecheck:parallel": "concurrently -n BE,FE,API,WEB --kill-others-on-fail \"npm:typecheck:backend\" \"npm:typecheck:frontend\" \"npm:typecheck:api\" \"npm:typecheck:web\"",
+    "typecheck:bg": "concurrently -n BE,FE,API,WEB \"npm:typecheck:backend\" \"npm:typecheck:frontend\" \"npm:typecheck:api\" \"npm:typecheck:web\" > typecheck-all.log 2>&1 &",
+    "typecheck:watch": "concurrently -n BE,FE,API,WEB \"npm:typecheck:backend:watch\" \"npm:typecheck:frontend:watch\" \"npm:typecheck:api:watch\" \"npm:typecheck:web:watch\"",
+    "typecheck:backend": "cd backend && tsc --noEmit --pretty false 2>&1 | tee ../typecheck-backend.log",
+    "typecheck:frontend": "cd frontend && tsc --noEmit --pretty false 2>&1 | tee ../typecheck-frontend.log",
+    "typecheck:api": "cd apps/api && tsc --noEmit --pretty false 2>&1 | tee ../../typecheck-api.log",
+    "typecheck:web": "cd apps/web && tsc --noEmit --pretty false 2>&1 | tee ../../typecheck-web.log",
+    "typecheck:backend:watch": "cd backend && tsc --noEmit --watch --preserveWatchOutput",
+    "typecheck:frontend:watch": "cd frontend && tsc --noEmit --watch --preserveWatchOutput",
+    "typecheck:api:watch": "cd apps/api && tsc --noEmit --watch --preserveWatchOutput",
+    "typecheck:web:watch": "cd apps/web && tsc --noEmit --watch --preserveWatchOutput",
+    "typecheck:json": "node scripts/parse-typescript-errors.js",
+    "typecheck:quick": "tsc --noEmit --skipLibCheck",
+    "build:all": "npm run build:backend && npm run build:frontend && npm run build:api && npm run build:web",
+    "build:parallel": "concurrently -n BE,FE,API,WEB --kill-others-on-fail \"npm:build:backend\" \"npm:build:frontend\" \"npm:build:api\" \"npm:build:web\"",
+    "build:backend": "cd backend && npm run build 2>&1",
+    "build:api": "cd apps/api && npm run build 2>&1",
+    "build:web": "cd apps/web && npm run build 2>&1"
   },
   "workspaces": [
     "backend",
@@ -38,5 +56,9 @@
     "postgresql"
   ],
   "author": "David Hoa",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "get-tsconfig": "^4.13.0"
+  }
 }

@@ -41,7 +41,7 @@ interface SSEMessage {
 
 export default function TestPacksDraftPage() {
   const searchParams = useSearchParams()
-  const [briefId, setBriefId] = useState('4f18f382-f706-4010-9920-8cd02aef686d')
+  const [briefId, setBriefId] = useState('0c638291-9a37-42d6-a308-209b73bf67db')
   const [brief, setBrief] = useState<Brief | null>(null)
   const [audience, setAudience] = useState('Marketing professionals')
   const [provider, setProvider] = useState<string>('deepseek')
@@ -71,12 +71,13 @@ export default function TestPacksDraftPage() {
 
   // Read brief_id from URL params and fetch brief data
   useEffect(() => {
-    const urlBriefId = searchParams?.get('brief_id')
+    // Support both brief_id and brief_ids query parameters
+    const urlBriefId = searchParams?.get('brief_id') || searchParams?.get('brief_ids')
     if (urlBriefId) {
       setBriefId(urlBriefId)
       fetchBrief(urlBriefId)
     }
-  }, [searchParams])
+  }, [searchParams, fetchBrief])
 
   // Fetch brief when briefId changes manually (with debounce to avoid too many requests)
   useEffect(() => {
