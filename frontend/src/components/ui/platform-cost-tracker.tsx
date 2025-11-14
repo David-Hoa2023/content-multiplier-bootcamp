@@ -12,7 +12,8 @@ import {
   Linkedin,
   Facebook,
   Instagram,
-  Music
+  Music,
+  Mail
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -49,7 +50,8 @@ const platformIcons = {
   LinkedIn: Linkedin,
   Facebook: Facebook,
   Instagram: Instagram,
-  TikTok: Music
+  TikTok: Music,
+  MailChimp: Mail
 }
 
 const platformColors = {
@@ -57,7 +59,8 @@ const platformColors = {
   LinkedIn: 'bg-blue-600 text-white',
   Facebook: 'bg-blue-700 text-white',
   Instagram: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
-  TikTok: 'bg-black text-white dark:bg-white dark:text-black'
+  TikTok: 'bg-black text-white dark:bg-white dark:text-black',
+  MailChimp: 'bg-yellow-400 text-black'
 }
 
 const currencySymbols = {
@@ -84,7 +87,8 @@ export function PlatformCostTracker({
       LinkedIn: { count: 0, totalCost: 0, totalInputTokens: 0, totalOutputTokens: 0, derivatives: [] },
       Facebook: { count: 0, totalCost: 0, totalInputTokens: 0, totalOutputTokens: 0, derivatives: [] },
       Instagram: { count: 0, totalCost: 0, totalInputTokens: 0, totalOutputTokens: 0, derivatives: [] },
-      TikTok: { count: 0, totalCost: 0, totalInputTokens: 0, totalOutputTokens: 0, derivatives: [] }
+      TikTok: { count: 0, totalCost: 0, totalInputTokens: 0, totalOutputTokens: 0, derivatives: [] },
+      MailChimp: { count: 0, totalCost: 0, totalInputTokens: 0, totalOutputTokens: 0, derivatives: [] }
     }
 
     costs.forEach(cost => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { AppLayout } from '@/components/layout'
 import { AnalyticsDashboard, type AnalyticsStats } from '@/components/ui/analytics-dashboard'
 import { Button } from '@/components/ui/button'
@@ -8,15 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster } from '@/components/ui/toaster'
-import { 
+import {
   BarChart3,
   RefreshCw,
   TrendingUp,
   Users,
   Zap,
-  DollarSign,
-  Clock,
-  Target
+  Clock
 } from 'lucide-react'
 
 // Sample analytics data

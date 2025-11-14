@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { CopyButton } from '@/components/ui/copy-button'
 import { Twitter, Linkedin } from 'lucide-react'
 
-export type Platform = 'Twitter' | 'LinkedIn' | 'Facebook' | 'Instagram' | 'TikTok'
+export type Platform = 'Twitter' | 'LinkedIn' | 'Facebook' | 'Instagram' | 'TikTok' | 'MailChimp'
 
 export interface PlatformConfig {
   platform: Platform

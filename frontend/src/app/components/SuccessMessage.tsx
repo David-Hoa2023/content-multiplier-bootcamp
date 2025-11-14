@@ -34,6 +34,7 @@ export default function SuccessMessage({
 
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [autoDismiss, dismissDelay, onDismiss])
 
   if (!shouldRender) {

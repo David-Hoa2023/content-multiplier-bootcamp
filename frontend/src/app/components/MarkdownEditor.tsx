@@ -38,7 +38,7 @@ interface MarkdownEditorProps {
 export default function MarkdownEditor({
   value,
   onChange,
-  placeholder = '',
+  placeholder: _placeholder = '',
   className = '',
   height = 300,
   additionalButtons,
@@ -230,7 +230,7 @@ export default function MarkdownEditor({
         <ImageIcon size={16} />
       </span>
     ),
-    execute: (state: any, api: any) => {
+    execute: (_state: any, _api: any) => {
       openImageDialog()
     },
   } : null

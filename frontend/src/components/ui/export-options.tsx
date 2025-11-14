@@ -17,7 +17,7 @@ import { format } from 'date-fns'
 export interface Derivative {
   id?: string
   title: string
-  platform: 'Twitter' | 'LinkedIn' | 'Facebook' | 'Instagram' | 'TikTok'
+  platform: 'Twitter' | 'LinkedIn' | 'Facebook' | 'Instagram' | 'TikTok' | 'MailChimp'
   content: string
   scheduledDate?: Date | string
   status?: 'draft' | 'scheduled' | 'published'
