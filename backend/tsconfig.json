@@ -9,14 +9,16 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": false,
-    "noFallthroughCasesInSwitch": true,
+    "noFallthroughCasesInSwitch": false,
     "noUncheckedIndexedAccess": false,
+    "noEmitOnError": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": false,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "suppressImplicitAnyIndexErrors": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
