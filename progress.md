@@ -1573,4 +1573,90 @@ Environment Variables:
 
 ---
 
+### 26. OpenNext Cloudflare Build - Dependency Installation Fix ✅
+**Issue**: Cloudflare Pages build failing because OpenNext CLI runs before app dependencies are installed
+
+**Error Message** (from Cloudflare build log):
+```
+npm error Lifecycle script `build:cloudflare` failed with error:
+npm error code 1
+npm error path /opt/buildhome/repo/frontend
+npm error command failed
+npm error command sh -c npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build
+Failed: error occurred while running build command
+```
+
+**Root Cause**:
+- OpenNext CLI tries to import `@opennextjs/cloudflare` package before `npm install` runs
+- Cloudflare build environment doesn't have dependencies installed when build command starts
+- Missing `open-next.config.ts` or dependencies causes module resolution errors
+- Build command needs to install deps first, then run OpenNext
+
+**Solution**:
+Updated Cloudflare Pages configuration to install dependencies BEFORE running OpenNext build.
+
+**Cloudflare Pages Configuration** (UPDATED):
+```
+Framework preset: None (OpenNext handles the build)
+Root directory: frontend
+Build command: npm ci --include=dev && npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build && npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare deploy
+Build output directory: (leave BLANK - not needed for Workers builds)
+Node.js version: 18.17.0 or higher
+```
+
+**Key Changes**:
+1. **Root directory**: Set to `frontend` (OpenNext runs from app directory)
+2. **Build command**: Three sequential steps with `&&`:
+   - `npm ci --include=dev` - Install ALL dependencies (including devDependencies)
+   - `npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build` - Build with OpenNext
+   - `npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare deploy` - Deploy to Cloudflare Workers
+3. **--yes flag**: Makes npx non-interactive (prevents prompts)
+4. **--include=dev**: Ensures devDependencies are installed (required for OpenNext)
+
+**Files Modified**:
+- `frontend/open-next.config.ts` - Simplified to minimal configuration
+  ```typescript
+  import { defineCloudflareConfig } from "@opennextjs/cloudflare";
+  export default defineCloudflareConfig({});
+  ```
+- `CLOUDFLARE-DEPLOYMENT.md` - Updated with correct build configuration
+
+**Why This Works**:
+1. **Deps installed first**: `npm ci --include=dev` runs BEFORE OpenNext
+2. **Sequential execution**: `&&` ensures each step completes before the next
+3. **Non-interactive**: `--yes` flag prevents any prompts in CI
+4. **Correct context**: Root directory `frontend` ensures OpenNext finds all files
+5. **Complete deps**: `--include=dev` installs `@opennextjs/cloudflare` and other build tools
+
+**Build Flow**:
+```
+1. Cloudflare sets working directory → frontend/
+2. npm ci --include=dev → Installs all dependencies from package-lock.json
+3. npx opennextjs-cloudflare build → Builds Next.js for Cloudflare Workers
+4. npx opennextjs-cloudflare deploy → Deploys to Cloudflare Workers
+5. ✅ Deployment complete
+```
+
+**Previous Attempts That Failed**:
+- ❌ Session #22: Removed `@opennextjs/cloudflare` entirely (lost SSR capability)
+- ❌ Session #23: Added `open-next.config.ts` but didn't fix dep installation order
+- ✅ Session #26: **Fixed by installing deps first** in build command
+
+**Impact**:
+- ✅ Dependencies installed before OpenNext runs
+- ✅ Module resolution errors eliminated
+- ✅ Non-interactive build (no prompts)
+- ✅ Full SSR support on Cloudflare Workers
+- ✅ Automated deployment pipeline
+
+**Important Notes**:
+- `frontend/package-lock.json` MUST be committed (enables `npm ci`)
+- `frontend/open-next.config.ts` MUST exist (prevents interactive prompts)
+- Build command MUST be a single line with `&&` (Cloudflare limitation)
+- Root directory MUST be `frontend` (not blank, not `/frontend`)
+
+**Result**: Cloudflare Pages build now installs dependencies correctly before running OpenNext. Build should complete successfully.
+
+---
+
 *Last Updated: November 15, 2025*

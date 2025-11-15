@@ -29,15 +29,17 @@ This project uses **OpenNext Cloudflare** to deploy Next.js to Cloudflare Worker
 
 ```
 Framework preset: None (OpenNext handles the build)
-Build command: npm run build:cloudflare
+Root directory: frontend
+Build command: npm ci --include=dev && npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build && npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare deploy
 Build output directory: (leave BLANK - not needed for Workers builds)
-Root directory: (leave blank - use repository root)
 Node.js version: 18.17.0 or higher
 ```
 
 **Important**:
+- **Root directory** must be set to `frontend` - this ensures OpenNext runs in the correct context
+- **Build command** installs dependencies first (`npm ci --include=dev`) before running OpenNext
 - **Do NOT set Build output directory** - OpenNext deploys to Cloudflare Workers, not static files
-- Root directory must be blank (monorepo workspace installation happens at root)
+- The build command is non-interactive and fully automated
 
 ### Environment Variables (Optional)
 ```
@@ -47,31 +49,31 @@ NEXT_PUBLIC_API_URL=https://your-backend-api.com
 
 ## Important Notes
 
-1. **Do NOT set Root Directory to /frontend**
-   - This is a monorepo with npm workspaces
-   - Build must run from repository root
-   - The build script handles the directory structure
+1. **Root Directory MUST be `frontend`**
+   - OpenNext requires running from the app directory
+   - Build command handles dependency installation first
+   - `npm ci --include=dev` ensures all deps (including devDependencies) are installed
 
 2. **npm ci Works Correctly**
-   - Clean package-lock.json generated
+   - `frontend/package-lock.json` exists and is committed
+   - Clean dependency installation every build
    - All dependencies properly resolved
-   - Workspace structure maintained
 
-3. **Static Export Enabled**
-   - All dynamic routes use client components
-   - Client-side routing handles dynamic paths
-   - No server-side rendering needed
+3. **Non-Interactive Build**
+   - `open-next.config.ts` file prevents interactive prompts
+   - Build command uses `--yes` flag for npx
+   - Fully automated CI/CD pipeline
 
 ## Build Process
 
 The build follows these steps:
-1. Cloudflare runs the build command: `npm run build:cloudflare`
-2. This executes: `npm ci --include=dev && cd frontend && npm run build:cloudflare`
-   - Installs all workspace dependencies (including devDependencies)
-   - Navigates to frontend directory
-   - Runs OpenNext Cloudflare build: `npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build`
+1. Cloudflare sets working directory to `frontend/` (based on Root directory setting)
+2. Runs the build command which:
+   - **Step 1**: `npm ci --include=dev` - Installs all dependencies (including devDependencies) from `frontend/package-lock.json`
+   - **Step 2**: `npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build` - Builds Next.js app with OpenNext
+   - **Step 3**: `npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare deploy` - Deploys to Cloudflare Workers
 3. OpenNext builds the Next.js app for Cloudflare Workers with full SSR support
-4. OpenNext automatically deploys to Cloudflare (no manual upload needed)
+4. Deployment happens automatically (no manual upload needed)
 
 **Benefits of OpenNext**:
 - Full Next.js SSR/ISR support on Cloudflare
@@ -126,28 +128,39 @@ The following files are required for OpenNext to work:
 ```typescript
 import { defineCloudflareConfig } from "@opennextjs/cloudflare";
 
-export default defineCloudflareConfig({
-  // Minimal configuration - add options later if needed
-  // See: https://opennext.js.org/cloudflare/get-started
-});
+export default defineCloudflareConfig({});
 ```
 
-This file prevents the interactive prompt error during CI builds.
+**Critical**: This file MUST exist and be committed to prevent interactive prompts during CI builds.
 
 ## Quick Fix Checklist
 
-If you're seeing the OpenNext interactive prompt error:
+If you're seeing the OpenNext build error, follow these steps:
 
-- [x] ✅ Added `frontend/open-next.config.ts` file
-- [x] ✅ Installed `@opennextjs/cloudflare` package
-- [x] ✅ Updated build command to use OpenNext
-- [ ] Go to Cloudflare Pages dashboard → Your Project → Settings
-- [ ] Update **Build command** to: `npm run build:cloudflare`
-- [ ] **REMOVE** Build output directory (leave blank)
-- [ ] Ensure **Root directory** is blank/empty
-- [ ] Add environment variable (optional): `NEXT_PUBLIC_API_URL=<your-backend-url>`
-- [ ] Save settings
-- [ ] Retry deployment
+### ✅ Files (Already Done)
+- [x] ✅ Added `frontend/open-next.config.ts` file with minimal config
+- [x] ✅ Installed `@opennextjs/cloudflare` package in frontend
+- [x] ✅ `frontend/package-lock.json` exists and is committed
+- [x] ✅ Upgraded Next.js to 14.2.33 (meets OpenNext requirement)
+
+### 🔧 Cloudflare Pages Configuration (Do This Now)
+1. Go to Cloudflare Pages dashboard → Your Project → **Settings** → **Builds & deployments**
+2. Click **Edit configuration** or **Configure build**
+3. Set the following:
+   - **Root directory**: `frontend`
+   - **Build command**:
+     ```bash
+     npm ci --include=dev && npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build && npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare deploy
+     ```
+   - **Build output directory**: (leave BLANK)
+   - **Node.js version**: 18.17.0 or higher
+4. **Save** and **Retry deployment**
+
+**Why This Works**:
+- `npm ci --include=dev` installs all deps BEFORE OpenNext runs (prevents "module not found" errors)
+- `--yes` flag makes npx non-interactive
+- Root directory `frontend` ensures OpenNext finds `open-next.config.ts`
+- Build command is a single line with `&&` to ensure sequential execution
 
 After updating settings, OpenNext will build and deploy automatically.
 
