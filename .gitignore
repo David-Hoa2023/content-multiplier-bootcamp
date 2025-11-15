@@ -91,3 +91,6 @@ typecheck-*.log
 typecheck-all.log
 scripts/node_modules
 
+# Temporary files
+nul
+
