@@ -209,20 +209,38 @@ export default function Home() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+
+        // Provide specific error messages
+        let errorMsg = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+
+        if (errorMsg.includes('No AI providers configured')) {
+          errorMsg = '❌ Chưa cấu hình AI provider.\n\n' +
+                    'Vui lòng:\n' +
+                    '1. Vào Settings → AI Provider\n' +
+                    '2. Nhập API key (OpenAI, Anthropic, DeepSeek, hoặc Gemini)\n' +
+                    '3. Thử lại';
+        } else if (response.status === 0 || errorMsg.includes('fetch')) {
+          errorMsg = '❌ Không thể kết nối đến backend.\n\n' +
+                    'Vui lòng kiểm tra:\n' +
+                    `1. Backend đã chạy chưa? (${API_URL})\n` +
+                    '2. Docker container đã start chưa?\n' +
+                    '3. Database đã sẵn sàng chưa?';
+        }
+
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
 
       if (data.success && data.data) {
         setFormData({ ...formData, description: data.data.description });
-        
+
         let successMessage = '✅ Đã tạo mô tả thành công!';
         if (data.data.knowledgeUsed) {
           successMessage += ` (Sử dụng ${data.data.ragContext?.length || 0} nguồn từ Knowledge Base)`;
         }
         setGenerateSuccess(successMessage);
-        
+
         if (data.usedProvider !== data.requestedProvider) {
           console.log(`ℹ️ Auto-selected provider: ${data.usedProvider} (requested: ${data.requestedProvider})`);
         }
@@ -231,7 +249,22 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error generating description:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Không thể generate description. Vui lòng kiểm tra backend và API keys.';
+
+      let errorMessage = 'Không thể tạo mô tả.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+          errorMessage = `❌ Không thể kết nối đến backend server.\n\n` +
+                        `Backend URL: ${API_URL}\n\n` +
+                        `Vui lòng kiểm tra:\n` +
+                        `1. Backend đã chạy chưa? (npm run dev trong /backend)\n` +
+                        `2. Docker containers đã start chưa? (docker-compose up -d)\n` +
+                        `3. Có lỗi trong backend logs không?`;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       setGenerateError(errorMessage);
     } finally {
       setIsGenerating(false);
