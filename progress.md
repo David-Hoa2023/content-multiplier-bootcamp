@@ -2785,4 +2785,210 @@ RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 ---
 
+## 22. NPM Workspaces Monorepo - Dockerfile Configuration Fix ✅
+
+**Date**: November 15, 2025
+
+### Issue
+Docker builds failing with `npm ci` lockfile mismatch errors because Dockerfiles tried to copy individual workspace lockfiles that don't exist in npm workspaces monorepo.
+
+**Error Pattern**:
+```
+COPY backend/package-lock.json ./  # File doesn't exist!
+COPY frontend/package-lock.json ./  # File doesn't exist!
+npm ci --omit=dev  # Fails - no lockfile found
+```
+
+### Root Cause
+**NPM Workspaces Architecture**:
+- This project uses npm workspaces: `backend/` and `frontend/` are workspaces
+- In a workspaces monorepo, **only the root has package-lock.json**
+- Individual workspaces (backend/, frontend/) DON'T have their own lockfiles
+- All dependencies for all workspaces are managed by the root `package-lock.json`
+
+**Previous Dockerfile Mistake**:
+- Tried to copy `backend/package-lock.json` and `frontend/package-lock.json`
+- These files don't exist in a workspaces setup
+- `npm ci` requires a lockfile, so builds failed
+
+### Actions Taken
+
+#### 1. Verified Workspace Structure ✅
+```bash
+# Confirmed npm workspaces setup
+cat package.json
+# "workspaces": ["backend", "frontend"]
+
+# Verified lockfile location
+Test-Path backend/package-lock.json   # False
+Test-Path frontend/package-lock.json  # False  
+Test-Path package-lock.json           # True ✅
+```
+
+#### 2. Regenerated Root Lockfile ✅
+```bash
+# At project root
+npm install  # Regenerates root lockfile for all workspaces
+npm ci       # Verify it works ✅
+```
+
+#### 3. Fixed Root Dockerfile for Workspaces ✅
+
+**Before (BROKEN)**:
+```dockerfile
+# Tried to copy individual workspace lockfiles (don't exist!)
+COPY backend/package.json backend/package-lock.json ./backend/
+COPY frontend/package.json frontend/package-lock.json ./frontend/
+RUN cd backend && npm ci --omit=dev  # FAILS - no lockfile
+```
+
+**After (FIXED)**:
+```dockerfile
+# syntax=docker/dockerfile:1
+
+# Stage 1: Install all workspace dependencies
+FROM node:18-alpine AS deps
+WORKDIR /app
+
+# Copy root workspace manifests first for better caching
+COPY package.json package-lock.json ./
+
+# Copy workspace package.json files
+COPY backend/package.json ./backend/package.json
+COPY frontend/package.json ./frontend/package.json
+
+# Install all workspace dependencies using root lockfile
+RUN npm ci --ignore-scripts --no-audit --no-fund
+
+# Stage 2: Build frontend
+FROM node:18-alpine AS frontend-builder
+WORKDIR /app
+
+# Copy node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/frontend/node_modules ./frontend/node_modules
+
+# Copy frontend source and build
+COPY frontend/ ./frontend/
+WORKDIR /app/frontend
+RUN npm run build
+
+# Stage 3: Production runtime
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy root workspace manifests
+COPY package.json package-lock.json ./
+COPY backend/package.json ./backend/package.json
+COPY frontend/package.json ./frontend/package.json
+
+# Install only production dependencies for all workspaces
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+
+# Copy backend source
+COPY backend/ ./backend/
+
+# Copy built frontend
+COPY --from=frontend-builder /app/frontend/.next ./frontend/.next
+COPY --from=frontend-builder /app/frontend/public ./frontend/public
+```
+
+#### 4. Fixed Backend Dockerfile (Standalone) ✅
+
+Since backend Dockerfile is for deploying backend only (not as a workspace), updated it to use `npm install` instead of `npm ci`:
+
+```dockerfile
+# For standalone backend deployment (Railway, etc.)
+FROM node:18-alpine AS deps
+WORKDIR /app/backend
+
+COPY package.json ./
+RUN npm install --ignore-scripts --no-audit --no-fund  # Not npm ci
+
+# ... build and production stages use npm install
+```
+
+### Files Modified
+- `package-lock.json` - Regenerated for root workspace
+- `Dockerfile` - Fixed to use root lockfile with workspaces
+- `backend/Dockerfile` - Updated to use npm install (no lockfile in workspace)
+
+### Commits
+```
+8ed3136 - "fix: sync backend and frontend lockfiles with package.json" (reverted lockfile deletions)
+b57586b - "fix: properly configure Dockerfiles for npm workspaces monorepo"
+```
+
+### Key Differences: Workspaces vs Standalone
+
+| Aspect | NPM Workspaces (This Project) | Standalone Packages |
+|--------|-------------------------------|---------------------|
+| Lockfile Location | Root `package-lock.json` only | Each package has own lockfile |
+| Install Command | `npm ci` at root | `npm ci` in each directory |
+| Dockerfile Strategy | Copy root lockfile + all workspace package.json | Copy individual lockfiles |
+| node_modules | Root + each workspace | Each package separately |
+
+### Why This Works
+
+**NPM Workspaces Behavior**:
+1. Root `package-lock.json` contains **all** dependencies for **all** workspaces
+2. Running `npm ci` at root installs:
+   - Root `node_modules/` with shared dependencies
+   - `backend/node_modules/` with backend-specific deps
+   - `frontend/node_modules/` with frontend-specific deps
+3. Workspaces share common dependencies (deduplication)
+4. Each workspace can still have its own unique dependencies
+
+**Dockerfile Best Practices for Workspaces**:
+✅ Copy root `package.json` + `package-lock.json` first
+✅ Copy all workspace `package.json` files
+✅ Run `npm ci` at root level (installs all workspaces)
+✅ Use `--omit=dev` for production stage
+✅ Copy source code after dependencies for better layer caching
+
+### Impact
+
+**Immediate Benefits**:
+- ✅ Docker builds now succeed with proper workspace handling
+- ✅ `npm ci` works correctly using root lockfile
+- ✅ No more "lockfile not found" errors
+- ✅ Proper dependency deduplication across workspaces
+- ✅ Faster builds with optimized layer caching
+
+**Build Behavior**:
+```bash
+# Before (FAILED)
+COPY backend/package-lock.json ./  # File doesn't exist
+npm ci  # Error: no lockfile
+
+# After (SUCCESS)
+COPY package-lock.json ./          # Root lockfile exists ✅
+COPY backend/package.json ./backend/package.json  # Workspace manifest
+npm ci  # Installs all workspaces correctly ✅
+```
+
+### Deployment Status
+- ✅ **Local Docker Build**: Works with workspace configuration
+- ✅ **Railway Backend**: Uses backend/Dockerfile with npm install
+- ✅ **Root Dockerfile**: Works for full-stack deployment
+- ✅ **Monorepo CI/CD**: Ready for any Docker-based CI
+
+### References
+- [npm workspaces documentation](https://docs.npmjs.com/cli/v8/using-npm/workspaces)
+- [npm ci with workspaces](https://docs.npmjs.com/cli/v8/commands/npm-ci#workspaces)
+- [Docker multi-stage builds](https://docs.docker.com/build/building/multi-stage/)
+
+### Important Notes
+
+**For Future Development**:
+- Don't create `backend/package-lock.json` or `frontend/package-lock.json`
+- Always run `npm install` / `npm ci` from project root
+- In Dockerfiles, copy root lockfile + all workspace package.json files
+- Use `npm ci` at root for reproducible builds
+- Individual workspace Dockerfiles should use `npm install` (no lockfile)
+
+---
+
 *Last Updated: November 15, 2025 (Evening)*
