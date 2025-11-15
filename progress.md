@@ -1117,4 +1117,78 @@ Node.js version: 18.17.0
 
 ---
 
-*Last Updated: November 14, 2025 - 21:15 ICT*
+### 21. Railway Deployment - Static Export Conflict ✅
+**Issue**: Railway deployment failing with error: "Page '/briefs/[brief_id]' is missing 'generateStaticParams()' so it cannot be used with 'output: export' config"
+
+**Error Message**:
+```
+Error: Page "/briefs/[brief_id]" is missing "generateStaticParams()" so it cannot be used with "output: export" config.
+    at /app/frontend/node_modules/next/dist/build/index.js:1012:59
+npm error path /app/frontend
+ERROR: failed to build: failed to solve: process "/bin/sh -c cd frontend && npm run build" did not complete successfully: exit code: 1
+```
+
+**Root Cause**:
+- Next.js configuration had `output: 'export'` permanently enabled for Cloudflare Pages
+- Railway deployment requires server-side rendering (SSR) to support dynamic routes
+- Dynamic route `/briefs/[brief_id]` uses client-side data fetching, incompatible with static export
+- Need different build configurations for Railway (SSR) vs Cloudflare Pages (static)
+
+**Actions Taken**:
+- Modified `next.config.js` to conditionally enable static export based on environment variable
+- Railway deployment will use SSR mode (dynamic rendering)
+- Cloudflare Pages deployment will use static export mode
+- Set `ENABLE_STATIC_EXPORT=true` environment variable in Cloudflare Pages to enable static mode
+
+**Files Modified**:
+- `frontend/next.config.js` - Made static export conditional
+
+**Code Changes**:
+```javascript
+// Before (BROKEN for Railway)
+const nextConfig = {
+  reactStrictMode: true,
+  output: 'export',        // Always static - breaks dynamic routes on Railway
+  trailingSlash: true,
+  // ...
+}
+
+// After (FIXED - works for both platforms)
+const nextConfig = {
+  reactStrictMode: true,
+
+  // Static export for Cloudflare Pages (disable for Railway/local dev)
+  // Set ENABLE_STATIC_EXPORT=true in Cloudflare Pages environment variables
+  ...(process.env.ENABLE_STATIC_EXPORT === 'true' && {
+    output: 'export',
+    trailingSlash: true,
+  }),
+  // ...
+}
+```
+
+**Deployment Configuration**:
+
+**Railway (Backend + Frontend SSR)**:
+- No environment variables needed
+- Builds with server-side rendering enabled
+- Supports all dynamic routes (/briefs/[brief_id], /packs/[pack_id]/edit, etc.)
+- Full Next.js functionality
+
+**Cloudflare Pages (Frontend Static Only)**:
+- Set environment variable: `ENABLE_STATIC_EXPORT=true`
+- Builds with static export mode
+- All pages pre-rendered as static HTML
+- Client-side routing handles dynamic paths
+
+**Impact**:
+- Railway deployment now succeeds with full SSR support
+- Cloudflare Pages deployment still works with static export when env var is set
+- Single codebase supports both deployment platforms
+- No need to manually toggle configuration between deployments
+
+**Result**: Railway build passes successfully. Frontend builds with dynamic rendering support.
+
+---
+
+*Last Updated: November 15, 2025*

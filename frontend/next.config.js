@@ -4,9 +4,12 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
 
-  // Static export for Cloudflare Pages
-  output: 'export',
-  trailingSlash: true,
+  // Static export for Cloudflare Pages (disable for Railway/local dev)
+  // Set ENABLE_STATIC_EXPORT=true in Cloudflare Pages environment variables
+  ...(process.env.ENABLE_STATIC_EXPORT === 'true' && {
+    output: 'export',
+    trailingSlash: true,
+  }),
   
   // Environment variables
   env: {
