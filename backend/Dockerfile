@@ -1,27 +1,17 @@
 # syntax=docker/dockerfile:1
 
 # Stage 1: Install dependencies
-FROM node:22-bullseye AS deps
+FROM node:18-alpine AS deps
 WORKDIR /app/backend
-
-# Install system dependencies for canvas (required by pdf-parse/pdf.js)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libcairo2-dev \
-    libpango1.0-dev \
-    libjpeg-dev \
-    libgif-dev \
-    librsvg2-dev \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy backend package.json
 COPY package.json ./
 
 # Install all dependencies (dev deps included for build)
-RUN npm install --no-audit --no-fund
+RUN npm install --ignore-scripts --no-audit --no-fund
 
 # Stage 2: Build
-FROM node:22-bullseye AS builder
+FROM node:18-alpine AS builder
 WORKDIR /app/backend
 
 # Copy node_modules from deps stage
@@ -34,26 +24,16 @@ COPY . .
 RUN npm run build
 
 # Stage 3: Production runtime
-FROM node:22-bullseye-slim AS runner
+FROM node:18-alpine AS runner
 WORKDIR /app/backend
 
 ENV NODE_ENV=production
-
-# Install runtime system dependencies for canvas
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libcairo2 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libjpeg62-turbo \
-    libgif7 \
-    librsvg2-2 \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy package.json
 COPY package.json ./
 
 # Install only production dependencies
-RUN npm install --omit=dev --no-audit --no-fund
+RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund
 
 # Copy built files from builder stage
 COPY --from=builder /app/backend/dist ./dist
