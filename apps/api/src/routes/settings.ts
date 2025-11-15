@@ -10,7 +10,7 @@ interface LLMConfig {
 
 const routes: FastifyPluginAsync = async (app) => {
     // Get LLM configuration
-    app.get('/llm', async (req: any) => {
+    app.get('/llm', async (_req: any) => {
         const saved = loadLLMSettings()
         if (saved) return saved
         const fallback: LLMConfig = {

@@ -59,7 +59,7 @@ export class FacebookPlatform extends BasePlatform {
         success: true,
         message: 'Facebook authentication successful',
         data: {
-          pageId: config.pageId,
+          pageId: this.config.pageId,
           pageName: 'Facebook Page'
         }
       }
@@ -142,7 +142,7 @@ export class FacebookPlatform extends BasePlatform {
         message: 'Facebook post published successfully',
         data: {
           id: `fb_post_${Date.now()}`,
-          url: `https://facebook.com/${config.pageId}/posts/${Date.now()}`,
+          url: `https://facebook.com/${this.config?.pageId || 'page'}/posts/${Date.now()}`,
           publishedAt: new Date().toISOString()
         }
       }

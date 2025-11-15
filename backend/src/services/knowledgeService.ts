@@ -1,9 +1,11 @@
 import pool from '../db'
 import fs from 'fs'
 import path from 'path'
-import pdf from 'pdf-parse'
+import * as pdfParse from 'pdf-parse'
 import mammoth from 'mammoth'
 import { generateEmbedding } from './embeddingService'
+
+const pdf = (pdfParse as any).default || pdfParse
 
 interface ProcessDocumentRequest {
   title: string
@@ -234,7 +236,7 @@ class KnowledgeService {
           AND 1 - (kc.embedding <=> $1::vector) >= $2
       `
       
-      const params = [JSON.stringify(queryEmbedding), request.similarity_threshold]
+      const params: any[] = [JSON.stringify(queryEmbedding), request.similarity_threshold]
       let paramIndex = 3
 
       // Filter by categories if specified
@@ -274,8 +276,8 @@ class KnowledgeService {
   // Get documents with filtering
   async getDocuments(request: GetDocumentsRequest): Promise<{ documents: any[], total: number }> {
     try {
-      let whereConditions = []
-      let params = []
+      let whereConditions: string[] = []
+      let params: any[] = []
       let paramIndex = 1
 
       if (request.category) {

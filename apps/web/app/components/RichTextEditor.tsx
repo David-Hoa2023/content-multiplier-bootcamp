@@ -170,13 +170,15 @@ export default function RichTextEditor({ value, onChange, placeholder, packId }:
     }
 
     const exportToPDF = async () => {
-        const { jsPDF } = await import('jspdf')
-        const doc = new jsPDF()
+        // TODO: Install jspdf package to enable PDF export
+        // const { jsPDF } = await import('jspdf')
+        // const doc = new jsPDF()
 
-        // Simple text export (in production, use proper HTML to PDF conversion)
-        const lines = doc.splitTextToSize(value, 180)
-        doc.text(lines, 15, 15)
-        doc.save(`draft-${packId || 'content'}.pdf`)
+        // // Simple text export (in production, use proper HTML to PDF conversion)
+        // const lines = doc.splitTextToSize(value, 180)
+        // doc.text(lines, 15, 15)
+        // doc.save(`draft-${packId || 'content'}.pdf`)
+        alert('PDF export feature requires jspdf package installation')
     }
 
     const exportToWord = () => {

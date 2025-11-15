@@ -93,7 +93,7 @@ export class PublishingOrchestrator {
             queue_id: result[0].queue_id,
             pack_id: packId,
             platform,
-            content_type: this.getContentType(platform),
+            content_type: this.getContentType(platform) as 'post' | 'newsletter' | 'article' | 'video_script',
             content_data: contentData,
             status: 'pending',
             scheduled_at: new Date(),
@@ -248,7 +248,7 @@ export class PublishingOrchestrator {
         return dbResult[0].result_id
     }
 
-    private async updatePackPublishingStatus(packId: string, successCount: number, failureCount: number, results: any[]): Promise<void> {
+    private async updatePackPublishingStatus(packId: string, _successCount: number, failureCount: number, results: any[]): Promise<void> {
         const status = failureCount === 0 ? 'published' : failureCount === results.length ? 'failed' : 'partially_published'
 
         await q(`

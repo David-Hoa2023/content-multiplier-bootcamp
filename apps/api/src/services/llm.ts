@@ -97,7 +97,7 @@ class MultiProviderLLM implements LLMClient {
                 model: p.model || saved?.model || this.getDefaultModel(provider, 'json'),
                 messages: [
                     { role: 'system' as const, content: systemMsg },
-                    { role: 'user' as const, content: p.user }
+                    { role: 'user' as const, content: p.user || '' }
                 ],
                 response_format: { type: 'json_object' }
             })

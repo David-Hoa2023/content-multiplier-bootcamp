@@ -86,7 +86,7 @@ export class SendGridService implements PublishingService {
 
         if (!response.ok) return {}
 
-        const data = await response.json()
+        const data = await response.json() as any
         return data.messages?.[0] || {}
     }
 
@@ -116,7 +116,7 @@ export class SendGridService implements PublishingService {
         return { valid: errors.length === 0, errors }
     }
 
-    private async getCredentials(packId: string): Promise<any> {
+    private async getCredentials(_packId: string): Promise<any> {
         const [cred] = await q(
             'SELECT encrypted_credentials FROM publishing_credentials WHERE platform = $1 AND is_active = true LIMIT 1',
             ['sendgrid']
@@ -183,7 +183,7 @@ export class MailchimpService implements PublishingService {
             throw new Error(`Mailchimp campaign creation error: ${error}`)
         }
 
-        const campaign = await campaignResponse.json()
+        const campaign = await campaignResponse.json() as any
 
         // Set campaign content
         const contentData = {
@@ -242,7 +242,7 @@ export class MailchimpService implements PublishingService {
 
         if (!response.ok) return {}
 
-        const data = await response.json()
+        const data = await response.json() as any
         return {
             opens: data.report_summary?.unique_opens || 0,
             clicks: data.report_summary?.unique_clicks || 0,
@@ -270,7 +270,7 @@ export class MailchimpService implements PublishingService {
         return { valid: errors.length === 0, errors }
     }
 
-    private async getCredentials(packId: string): Promise<any> {
+    private async getCredentials(_packId: string): Promise<any> {
         const [cred] = await q(
             'SELECT encrypted_credentials FROM publishing_credentials WHERE platform = $1 AND is_active = true LIMIT 1',
             ['mailchimp']

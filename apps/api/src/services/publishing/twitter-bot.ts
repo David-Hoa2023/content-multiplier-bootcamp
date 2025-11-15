@@ -1,5 +1,5 @@
 import { llm } from '../llm.ts'
-import { TwitterService } from './social-media.ts'
+// import { TwitterService } from './social-media.ts'
 import { PublishingOrchestrator } from './orchestrator.ts'
 import { loadLLMSettings } from '../settingsStore.ts'
 import { q } from '../../db.ts'
@@ -25,13 +25,13 @@ export interface TwitterContentTemplate {
 }
 
 export class TwitterBotService {
-    private twitterService: TwitterService
+    // private twitterService: TwitterService
     private orchestrator: PublishingOrchestrator
     private isRunning: boolean = false
     private intervalId: NodeJS.Timeout | null = null
 
     constructor() {
-        this.twitterService = new TwitterService()
+        // this.twitterService = new TwitterService()
         this.orchestrator = new PublishingOrchestrator()
     }
 
@@ -105,9 +105,9 @@ export class TwitterBotService {
         this.intervalId = setTimeout(async () => {
             try {
                 await this.generateAndPost(config)
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error in scheduled Twitter post:', error)
-                await this.logBotEvent('post_failed', { error: error.message })
+                await this.logBotEvent('post_failed', { error: error?.message || String(error) })
             }
 
             // Schedule the next post
@@ -127,6 +127,7 @@ export class TwitterBotService {
         // Find the next scheduled time today
         for (const timeStr of config.schedule_times.sort()) {
             const [hours, minutes] = timeStr.split(':').map(Number)
+            if (hours === undefined || minutes === undefined) continue
             const scheduledTime = new Date(today.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000)
             
             if (scheduledTime > now) {
@@ -136,7 +137,10 @@ export class TwitterBotService {
 
         // If no more times today, schedule for first time tomorrow
         const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
-        const [hours, minutes] = config.schedule_times[0].split(':').map(Number)
+        const firstTime = config.schedule_times[0]
+        if (!firstTime) return null
+        const [hours, minutes] = firstTime.split(':').map(Number)
+        if (hours === undefined || minutes === undefined) return null
         return new Date(tomorrow.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000)
     }
 
@@ -203,10 +207,10 @@ export class TwitterBotService {
     }
 
     private buildPrompt(template: TwitterContentTemplate, config: TwitterBotConfig): string {
-        const randomTopic = config.content_topics[Math.floor(Math.random() * config.content_topics.length)]
+        const randomTopic = config.content_topics[Math.floor(Math.random() * config.content_topics.length)] || 'technology'
         
         return template.prompt
-            .replace('{topic}', randomTopic)
+            .replace('{topic}', randomTopic || '')
             .replace('{tone}', template.tone)
             .replace('{max_length}', template.max_length.toString())
             + (template.hashtags ? `\n\nSuggested hashtags: ${template.hashtags.join(', ')}` : '')
@@ -343,7 +347,14 @@ export class TwitterBotService {
         thread?: string[]
         hashtags?: string[]
     }> {
-        const prompt = this.buildPrompt(template, { content_topics: [topic] })
+        const prompt = this.buildPrompt(template, {
+            enabled: true,
+            interval_hours: 1,
+            prompt_template: '',
+            max_tweets_per_day: 10,
+            schedule_times: [],
+            content_topics: [topic]
+        } as TwitterBotConfig)
         
         // Get the configured LLM settings
         const llmSettings = loadLLMSettings()

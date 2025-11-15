@@ -72,7 +72,7 @@ export class WordPressPlatform extends BasePlatform {
       })
 
       if (response.ok) {
-        const user = await response.json()
+        const user = await response.json() as any
         return {
           success: true,
           message: `Successfully authenticated as: ${user.name} (${user.username})`,
@@ -86,7 +86,7 @@ export class WordPressPlatform extends BasePlatform {
           }
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any as any
         return {
           success: false,
           message: error.message || 'Authentication failed'
@@ -166,7 +166,7 @@ export class WordPressPlatform extends BasePlatform {
       })
 
       if (postTypesResponse.ok) {
-        const postType = await postTypesResponse.json()
+        const postType = await postTypesResponse.json() as any
         const canPublish = authResult.data?.capabilities?.publish_posts || false
 
         return {
@@ -206,7 +206,7 @@ export class WordPressPlatform extends BasePlatform {
       })
 
       if (response.ok) {
-        const post: WordPressPost = await response.json()
+        const post = await response.json() as WordPressPost
         
         return {
           success: true,
@@ -224,7 +224,7 @@ export class WordPressPlatform extends BasePlatform {
           }
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any as any
         return {
           success: false,
           error: error.message || 'Failed to create post'
@@ -256,7 +256,7 @@ export class WordPressPlatform extends BasePlatform {
       })
 
       if (response.ok) {
-        const post: WordPressPost = await response.json()
+        const post = await response.json() as WordPressPost
         
         return {
           success: true,
@@ -265,7 +265,7 @@ export class WordPressPlatform extends BasePlatform {
           message: `Post scheduled for ${scheduledTime.toLocaleString()}`
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any
         return {
           success: false,
           error: error.message || 'Failed to schedule post'
@@ -299,7 +299,7 @@ export class WordPressPlatform extends BasePlatform {
           message: 'Scheduled post converted to draft'
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any
         return {
           success: false,
           error: error.message || 'Failed to cancel scheduled post'
@@ -323,7 +323,7 @@ export class WordPressPlatform extends BasePlatform {
       })
 
       if (response.ok) {
-        const post: WordPressPost = await response.json()
+        const post = await response.json() as WordPressPost
         
         return {
           success: true,
@@ -337,7 +337,7 @@ export class WordPressPlatform extends BasePlatform {
           }
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any
         return {
           success: false,
           error: error.message || 'Failed to get post'
@@ -353,14 +353,11 @@ export class WordPressPlatform extends BasePlatform {
       const authHeader = this.buildAuthHeader(config)
       const apiUrl = this.buildApiUrl(config.configuration.siteUrl)
 
-      const response = await fetch(`${apiUrl}/posts/${platformId}`, {
+      const response = await fetch(`${apiUrl}/posts/${platformId}?force=true`, {
         method: 'DELETE',
         headers: {
           'Authorization': authHeader,
           'Content-Type': 'application/json'
-        },
-        params: {
-          force: 'true' // Permanently delete instead of moving to trash
         }
       })
 
@@ -370,7 +367,7 @@ export class WordPressPlatform extends BasePlatform {
           message: 'Post deleted successfully'
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any as any
         return {
           success: false,
           error: error.message || 'Failed to delete post'
@@ -397,7 +394,7 @@ export class WordPressPlatform extends BasePlatform {
       })
 
       if (response.ok) {
-        const post: WordPressPost = await response.json()
+        const post = await response.json() as WordPressPost
         
         return {
           success: true,
@@ -411,7 +408,7 @@ export class WordPressPlatform extends BasePlatform {
           }
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any
         return {
           success: false,
           error: error.message || 'Failed to update post'
@@ -455,7 +452,7 @@ export class WordPressPlatform extends BasePlatform {
 
     const postData: any = {
       title: title,
-      content: this.formatContent(bodyContent),
+      content: this.formatContent(bodyContent, config),
       status: options?.status || config.configuration.defaultStatus,
       format: config.configuration.postFormat || 'standard',
       comment_status: config.configuration.allowComments ? 'open' : 'closed',
@@ -493,7 +490,7 @@ export class WordPressPlatform extends BasePlatform {
 
   private extractTitle(content: string): string {
     const lines = content.split('\n')
-    const firstLine = lines[0].trim()
+    const firstLine = lines[0]?.trim() || ''
     
     // Remove markdown header syntax
     return firstLine.replace(/^#+\s*/, '').trim() || 'Untitled Post'
@@ -511,7 +508,7 @@ export class WordPressPlatform extends BasePlatform {
     return [...new Set([...hashtags, ...defaultTags])]
   }
 
-  formatContent(content: string): string {
+  formatContent(content: string, config: PlatformConfig): string {
     // Convert markdown-like syntax to WordPress content
     return content
       .replace(/^## (.+)$/gm, '<h2>$1</h2>')
@@ -544,10 +541,10 @@ export class WordPressPlatform extends BasePlatform {
       })
 
       if (response.ok) {
-        const categories = await response.json()
+        const categories = await response.json() as any[]
         return categories.length > 0 ? categories[0].id : null
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting category ID:', error)
     }
     return null
@@ -569,7 +566,7 @@ export class WordPressPlatform extends BasePlatform {
         })
 
         if (response.ok) {
-          const tags = await response.json()
+          const tags = await response.json() as any[]
           if (tags.length > 0) {
             tagIds.push(tags[0].id)
           } else {
@@ -584,13 +581,13 @@ export class WordPressPlatform extends BasePlatform {
             })
 
             if (createResponse.ok) {
-              const newTag = await createResponse.json()
+              const newTag = await createResponse.json() as any
               tagIds.push(newTag.id)
             }
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting tag IDs:', error)
     }
 

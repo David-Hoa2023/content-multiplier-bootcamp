@@ -61,7 +61,7 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
       const { platform_type } = request.query as { platform_type?: string }
       
       let query = 'SELECT * FROM platform_templates'
-      const params = []
+      const params: any[] = []
       
       if (platform_type) {
         query += ' WHERE platform_type = $1'

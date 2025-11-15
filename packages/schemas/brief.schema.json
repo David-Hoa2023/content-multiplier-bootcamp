@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "brief_id": { "type": "string" },
+    "title": { "type": "string" },
+    "content": { "type": "string" },
+    "key_points": { "type": "array" },
+    "counterpoints": { "type": "array" },
+    "outline": { "type": "array" },
+    "claims_ledger": { "type": "array" }
+  },
+  "required": ["title"]
+}
+

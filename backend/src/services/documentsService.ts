@@ -99,8 +99,8 @@ export async function getDocuments(filters: {
 } = {}): Promise<{ documents: Document[], total: number }> {
   let query = 'SELECT * FROM documents'
   let countQuery = 'SELECT COUNT(*) FROM documents'
-  const conditions = []
-  const values = []
+  const conditions: string[] = []
+  const values: any[] = []
   let paramIndex = 1
   
   // Build WHERE conditions
@@ -200,8 +200,8 @@ export async function searchDocuments(request: SearchDocumentsRequest): Promise<
       WHERE d.status = 'ready' AND dc.embedding IS NOT NULL
     `
     
-    const conditions = []
-    const values = [queryEmbedding]
+    const conditions: string[] = []
+    const values: any[] = [queryEmbedding]
     let paramIndex = 2
     
     // Add filters
@@ -315,8 +315,8 @@ export async function getDocumentById(id: number): Promise<Document | null> {
  * Update document
  */
 export async function updateDocument(id: number, data: Partial<CreateDocumentRequest>): Promise<Document | null> {
-  const fields = []
-  const values = []
+  const fields: string[] = []
+  const values: any[] = []
   let paramIndex = 1
   
   if (data.title !== undefined) {
@@ -378,7 +378,7 @@ export async function deleteDocument(id: number): Promise<boolean> {
     const result = await client.query('DELETE FROM documents WHERE id = $1', [id])
     
     await client.query('COMMIT')
-    return result.rowCount > 0
+    return (result.rowCount ?? 0) > 0
     
   } catch (error) {
     await client.query('ROLLBACK')

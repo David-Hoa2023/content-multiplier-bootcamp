@@ -190,8 +190,8 @@ export async function ideaRoutes(fastify: FastifyInstance) {
       }
 
       // Save ideas to database
-      const savedIdeas = [];
-      const errors = [];
+      const savedIdeas: any[] = [];
+      const errors: any[] = [];
 
       for (const idea of result.ideas) {
         try {

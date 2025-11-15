@@ -1,10 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+// import Link from 'next/link'
 import Button from '../components/Button'
-import Card from '../components/Card'
+// import Card from '../components/Card'
 import PageHeader from '../components/PageHeader'
-import StatusBadge from '../components/StatusBadge'
+// import StatusBadge from '../components/StatusBadge'
 
 interface AnalyticsData {
     pack_id: string

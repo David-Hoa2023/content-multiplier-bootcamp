@@ -49,7 +49,7 @@ export class TwitterService implements PublishingService {
             throw new Error(`Twitter API error: ${error}`)
         }
 
-        const result = await response.json()
+        const result = await response.json() as any
         return {
             result_id: 0, // Will be set by caller
             queue_id: job.queue_id,
@@ -82,7 +82,7 @@ export class TwitterService implements PublishingService {
                 throw new Error(`Twitter thread error: ${error}`)
             }
 
-            const result = await response.json()
+            const result = await response.json() as any
             lastTweetId = result.data.id
         }
 
@@ -109,7 +109,7 @@ export class TwitterService implements PublishingService {
 
         if (!response.ok) return {}
 
-        const data = await response.json()
+        const data = await response.json() as any
         return data.data?.public_metrics || {}
     }
 
@@ -166,7 +166,7 @@ export class LinkedInService implements PublishingService {
             throw new Error('Failed to get LinkedIn profile')
         }
 
-        const profile = await profileResponse.json()
+        const profile = await profileResponse.json() as any
         const authorUrn = `urn:li:person:${profile.id}`
 
         // Create the post
@@ -201,7 +201,7 @@ export class LinkedInService implements PublishingService {
             throw new Error(`LinkedIn API error: ${error}`)
         }
 
-        const result = await response.json()
+        const result = await response.json() as any
         return {
             result_id: 0,
             queue_id: job.queue_id,
@@ -212,7 +212,7 @@ export class LinkedInService implements PublishingService {
         }
     }
 
-    async getMetrics(result: PublishingResult): Promise<Record<string, any>> {
+    async getMetrics(_result: PublishingResult): Promise<Record<string, any>> {
         // LinkedIn metrics require additional API calls and permissions
         return {}
     }
@@ -272,7 +272,7 @@ export class FacebookService implements PublishingService {
             throw new Error(`Facebook API error: ${error}`)
         }
 
-        const result = await response.json()
+        const result = await response.json() as any
         return {
             result_id: 0,
             queue_id: job.queue_id,
@@ -291,7 +291,7 @@ export class FacebookService implements PublishingService {
 
         if (!response.ok) return {}
 
-        const data = await response.json()
+        const data = await response.json() as any
         return data.data || {}
     }
 
@@ -347,7 +347,7 @@ export class InstagramService implements PublishingService {
             throw new Error(`Instagram container creation error: ${error}`)
         }
 
-        const container = await containerResponse.json()
+        const container = await containerResponse.json() as any
 
         // Publish the media
         const publishData = new URLSearchParams({
@@ -365,7 +365,7 @@ export class InstagramService implements PublishingService {
             throw new Error(`Instagram publish error: ${error}`)
         }
 
-        const result = await publishResponse.json()
+        const result = await publishResponse.json() as any
         return {
             result_id: 0,
             queue_id: job.queue_id,
@@ -384,7 +384,7 @@ export class InstagramService implements PublishingService {
 
         if (!response.ok) return {}
 
-        const data = await response.json()
+        const data = await response.json() as any
         return data.data || {}
     }
 

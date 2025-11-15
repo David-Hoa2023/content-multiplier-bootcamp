@@ -98,7 +98,7 @@ export class PlatformCredentialsService {
    * Store platform configuration with encrypted credentials
    */
   async storePlatformConfig(config: PlatformConfig): Promise<PlatformConfig> {
-    let encryptedCredentials = null;
+    let encryptedCredentials: string | null = null;
 
     if (config.credentials) {
       const encrypted = encryptCredentials(config.credentials);
@@ -228,7 +228,7 @@ export class PlatformCredentialsService {
     }
 
     const config = result.rows[0];
-    let credentials = null;
+    let credentials: any = null;
 
     if (config.credentials) {
       try {

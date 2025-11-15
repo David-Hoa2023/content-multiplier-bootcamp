@@ -86,7 +86,7 @@ export class WebhookManager implements WebhookService {
                     timestamp: new Date().toISOString(),
                     delivery_id: delivery.delivery_id
                 }),
-                timeout: 30000 // 30 second timeout
+                signal: AbortSignal.timeout(30000) // 30 second timeout
             })
 
             // Update delivery status

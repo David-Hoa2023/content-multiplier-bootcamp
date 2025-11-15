@@ -78,14 +78,14 @@ export class MailChimpPlatform extends BasePlatform {
       })
 
       if (response.ok) {
-        const data = await response.json()
+        const data = await response.json() as any
         return {
           success: true,
           message: 'Successfully authenticated with MailChimp',
           data: { health_status: data.health_status }
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any as any
         return {
           success: false,
           message: error.detail || 'Authentication failed'
@@ -164,7 +164,7 @@ export class MailChimpPlatform extends BasePlatform {
       })
 
       if (listResponse.ok) {
-        const listData = await listResponse.json()
+        const listData = await listResponse.json() as any
         return {
           success: true,
           message: `Connected successfully. List: "${listData.name}" (${listData.stats.member_count} subscribers)`,
@@ -175,7 +175,7 @@ export class MailChimpPlatform extends BasePlatform {
           }
         }
       } else {
-        const error = await listResponse.json()
+        const error = await listResponse.json() as any
         return {
           success: false,
           message: `List access failed: ${error.detail || 'Unknown error'}`
@@ -248,7 +248,7 @@ export class MailChimpPlatform extends BasePlatform {
           message: `Email campaign scheduled for ${scheduledTime.toLocaleString()}`
         }
       } else {
-        const error = await scheduleResponse.json()
+        const error = await scheduleResponse.json() as any
         return {
           success: false,
           error: error.detail || 'Failed to schedule campaign'
@@ -278,7 +278,7 @@ export class MailChimpPlatform extends BasePlatform {
           message: 'Campaign unscheduled successfully'
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any
         return {
           success: false,
           error: error.detail || 'Failed to unschedule campaign'
@@ -302,7 +302,7 @@ export class MailChimpPlatform extends BasePlatform {
       })
 
       if (response.ok) {
-        const campaign: MailChimpCampaign = await response.json()
+        const campaign = await response.json() as MailChimpCampaign
         
         // Get campaign content
         const contentResponse = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${platformId}/content`, {
@@ -312,7 +312,7 @@ export class MailChimpPlatform extends BasePlatform {
           }
         })
 
-        const content = contentResponse.ok ? await contentResponse.json() : null
+        const content = contentResponse.ok ? await contentResponse.json() as any : null
 
         return {
           success: true,
@@ -328,7 +328,7 @@ export class MailChimpPlatform extends BasePlatform {
           }
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any
         return {
           success: false,
           error: error.detail || 'Failed to get campaign'
@@ -358,7 +358,7 @@ export class MailChimpPlatform extends BasePlatform {
           message: 'Campaign deleted successfully'
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any
         return {
           success: false,
           error: error.detail || 'Failed to delete campaign'
@@ -421,11 +421,11 @@ export class MailChimpPlatform extends BasePlatform {
       })
 
       if (!createResponse.ok) {
-        const error = await createResponse.json()
+        const error = await createResponse.json() as any
         throw new Error(error.detail || 'Failed to create campaign')
       }
 
-      const campaign: MailChimpCampaign = await createResponse.json()
+      const campaign = await createResponse.json() as MailChimpCampaign
 
       // Set campaign content
       const contentResponse = await fetch(`https://${dataCenter}.api.mailchimp.com/3.0/campaigns/${campaign.id}/content`, {
@@ -440,7 +440,7 @@ export class MailChimpPlatform extends BasePlatform {
       })
 
       if (!contentResponse.ok) {
-        const error = await contentResponse.json()
+        const error = await contentResponse.json() as any
         throw new Error(error.detail || 'Failed to set campaign content')
       }
 
@@ -470,7 +470,7 @@ export class MailChimpPlatform extends BasePlatform {
           message: 'Campaign sent successfully'
         }
       } else {
-        const error = await response.json()
+        const error = await response.json() as any
         return {
           success: false,
           error: error.detail || 'Failed to send campaign'
@@ -483,12 +483,12 @@ export class MailChimpPlatform extends BasePlatform {
 
   private extractDataCenter(apiKey: string): string | null {
     const parts = apiKey.split('-')
-    return parts.length === 2 ? parts[1] : null
+    return parts.length === 2 ? (parts[1] ?? null) : null
   }
 
   private extractSubjectLine(content: string, config: MailChimpConfig): string {
     const lines = content.split('\n')
-    let subject = lines[0].replace(/^#+\s*/, '').trim() // Remove markdown headers
+    let subject = (lines[0] ?? '').replace(/^#+\s*/, '').trim() // Remove markdown headers
     
     // Add prefix if configured
     if (config.configuration.subjectPrefix) {
@@ -500,7 +500,7 @@ export class MailChimpPlatform extends BasePlatform {
 
   private extractPreviewText(content: string): string {
     const lines = content.split('\n').filter(line => line.trim())
-    const secondLine = lines.length > 1 ? lines[1] : lines[0]
+    const secondLine = (lines.length > 1 ? lines[1] : lines[0]) ?? ''
     return secondLine.replace(/[#*_`]/g, '').trim().substring(0, 150)
   }
 

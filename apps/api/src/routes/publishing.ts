@@ -2,8 +2,9 @@ import { FastifyPluginAsync } from 'fastify'
 import { q } from '../db.ts'
 import { OAuthService } from '../services/publishing/oauth.ts'
 import { PublishingOrchestrator } from '../services/publishing/orchestrator.ts'
-import { WebhookManager, WEBHOOK_EVENTS } from '../services/publishing/webhooks.ts'
-import { logEvent } from '../services/telemetry.ts'
+import { WebhookManager } from '../services/publishing/webhooks.ts'
+// import { WEBHOOK_EVENTS } from '../services/publishing/webhooks.ts'
+// import { logEvent } from '../services/telemetry.ts'
 
 const routes: FastifyPluginAsync = async (app) => {
     const orchestrator = new PublishingOrchestrator()
@@ -145,7 +146,7 @@ const routes: FastifyPluginAsync = async (app) => {
     })
 
     app.post('/retry/:pack_id', async (req: any, reply) => {
-        const { pack_id } = req.params
+        const { pack_id: _pack_id } = req.params
 
         try {
             await orchestrator.retryFailedJobs()

@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "pack_id": { "type": "string" },
+    "brief_id": { "type": "string" },
+    "draft_content": { "type": "string" },
+    "word_count": { "type": "number" },
+    "status": { "type": "string" }
+  },
+  "required": ["draft_content"]
+}
+

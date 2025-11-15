@@ -21,7 +21,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
       };
     } catch (error) {
       console.error('Error fetching providers:', error);
-      reply.status(500).send({ success: false, error: 'Failed to fetch providers' });
+      return reply.status(500).send({ success: false, error: 'Failed to fetch providers' });
     }
   });
 
@@ -47,7 +47,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
         };
       } catch (error) {
         console.error('Error fetching models:', error);
-        reply.status(500).send({ success: false, error: 'Failed to fetch models' });
+        return reply.status(500).send({ success: false, error: 'Failed to fetch models' });
       }
     }
   );
@@ -130,7 +130,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
       };
     } catch (error) {
       console.error('Error generating content:', error);
-      reply.status(500).send({
+      return reply.status(500).send({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to generate content',
       });
@@ -197,7 +197,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
             })
           });
           
-          const ragData = await ragResponse.json();
+          const ragData = await ragResponse.json() as any;
           if (ragData.success && ragData.data.results.length > 0) {
             ragResults = ragData.data.results;
             ragContext = '\n\n--- Relevant Context from Knowledge Base ---\n';
@@ -264,7 +264,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
       };
     } catch (error) {
       console.error('Error generating idea:', error);
-      reply.status(500).send({
+      return reply.status(500).send({
         success: false,
         error: 'Failed to generate idea content',
       });

@@ -47,7 +47,7 @@ export class WordPressService implements PublishingService {
             throw new Error(`WordPress API error: ${error}`)
         }
 
-        const result = await response.json()
+        const result = await response.json() as any
         return {
             result_id: 0,
             queue_id: job.queue_id,
@@ -71,7 +71,7 @@ export class WordPressService implements PublishingService {
 
         if (!response.ok) return {}
 
-        const data = await response.json()
+        const data = await response.json() as any
         return {
             views: data.meta?.views || 0,
             comments: data.comment_count || 0,
@@ -97,7 +97,7 @@ export class WordPressService implements PublishingService {
         return { valid: errors.length === 0, errors }
     }
 
-    private async getCredentials(packId: string): Promise<any> {
+    private async getCredentials(_packId: string): Promise<any> {
         const [cred] = await q(
             'SELECT encrypted_credentials FROM publishing_credentials WHERE platform = $1 AND is_active = true LIMIT 1',
             ['wordpress']
@@ -145,7 +145,7 @@ export class MediumService implements PublishingService {
             throw new Error('Failed to get Medium user info')
         }
 
-        const user = await userResponse.json()
+        const user = await userResponse.json() as any
         const userId = user.data.id
 
         // Create the post
@@ -172,7 +172,7 @@ export class MediumService implements PublishingService {
             throw new Error(`Medium API error: ${error}`)
         }
 
-        const result = await response.json()
+        const result = await response.json() as any
         return {
             result_id: 0,
             queue_id: job.queue_id,
@@ -183,7 +183,7 @@ export class MediumService implements PublishingService {
         }
     }
 
-    async getMetrics(result: PublishingResult): Promise<Record<string, any>> {
+    async getMetrics(_result: PublishingResult): Promise<Record<string, any>> {
         // Medium doesn't provide public metrics via API
         return {}
     }
@@ -214,7 +214,7 @@ export class MediumService implements PublishingService {
         return { valid: errors.length === 0, errors }
     }
 
-    private async getCredentials(packId: string): Promise<any> {
+    private async getCredentials(_packId: string): Promise<any> {
         const [cred] = await q(
             'SELECT encrypted_credentials FROM publishing_credentials WHERE platform = $1 AND is_active = true LIMIT 1',
             ['medium']

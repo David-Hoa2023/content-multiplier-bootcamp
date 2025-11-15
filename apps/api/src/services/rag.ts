@@ -1,5 +1,5 @@
 import { q } from '../db.ts';
-import { env } from '../env.ts';
+// import { env } from '../env.ts';
 
 // simple splitter
 export function splitText(raw: string, chunkSize = 800, overlap = 100) {

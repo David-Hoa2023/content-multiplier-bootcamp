@@ -216,7 +216,7 @@ const derivativesRoutes: FastifyPluginAsync = async (fastify, opts) => {
     }
     
     try {
-      const scheduled = []
+      const scheduled: any[] = []
       
       for (let i = 0; i < derivative_ids.length; i++) {
         const derivativeId = derivative_ids[i]

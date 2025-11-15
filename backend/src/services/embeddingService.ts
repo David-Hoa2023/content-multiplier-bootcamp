@@ -113,7 +113,7 @@ export function cosineSimilarity(a: number[], b: number[]): number {
  */
 export async function processDocumentForSearch(content: string): Promise<Array<{ chunk: TextChunk, embedding: number[] }>> {
   const chunks = chunkText(content)
-  const results = []
+  const results: Array<{ chunk: TextChunk, embedding: number[] }> = []
   
   for (const chunk of chunks) {
     try {

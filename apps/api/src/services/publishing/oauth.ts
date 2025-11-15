@@ -40,7 +40,7 @@ const OAUTH_CONFIGS = {
 
 // Encryption utilities
 const ENCRYPTION_KEY = process.env.PUBLISHING_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex')
-const ALGORITHM = 'aes-256-gcm'
+// const ALGORITHM = 'aes-256-gcm'
 
 function encrypt(text: string): string {
     const iv = crypto.randomBytes(16)
@@ -55,6 +55,9 @@ function encrypt(text: string): string {
 
 function decrypt(encryptedText: string): string {
     const [ivHex, encrypted] = encryptedText.split(':')
+    if (!ivHex || !encrypted) {
+        throw new Error('Invalid encrypted text format')
+    }
     const iv = Buffer.from(ivHex, 'hex')
     const key = Buffer.from(ENCRYPTION_KEY, 'hex')
 
@@ -168,7 +171,7 @@ export class OAuthService {
             throw new Error(`OAuth token exchange failed: ${error}`)
         }
 
-        const tokenData = await tokenResponse.json()
+        const tokenData = await tokenResponse.json() as any
         console.log('Token exchange successful, received:', Object.keys(tokenData))
 
         // Encrypt and store credentials
@@ -211,7 +214,7 @@ export class OAuthService {
             console.log('Insert operation completed:', insertResult[0])
             console.log('Credentials stored successfully in database')
             
-        } catch (dbError) {
+        } catch (dbError: any) {
             console.error('Database operation failed:', dbError)
             throw new Error(`Failed to store credentials: ${dbError.message}`)
         }
@@ -238,7 +241,7 @@ export class OAuthService {
             credential_type: 'oauth',
             encrypted_credentials: { encrypted: encryptedCredentials },
             is_active: true,
-            expires_at: expiresAt
+            expires_at: expiresAt || undefined
         }
     }
 
@@ -292,7 +295,7 @@ export class OAuthService {
             throw new Error('Token refresh failed')
         }
 
-        const tokenData = await refreshResponse.json()
+        const tokenData = await refreshResponse.json() as any
 
         // Update stored credentials
         const encryptedCredentials = encrypt(JSON.stringify({
@@ -323,13 +326,13 @@ export class OAuthService {
 }
 
 // OAuth states table (temporary storage for OAuth flow)
-const createOAuthStatesTable = `
-CREATE TABLE IF NOT EXISTS oauth_states (
-    state TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    platform TEXT NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT now()
-);
-`
+// const _createOAuthStatesTable = `
+// CREATE TABLE IF NOT EXISTS oauth_states (
+//     state TEXT PRIMARY KEY,
+//     user_id TEXT NOT NULL,
+//     platform TEXT NOT NULL,
+//     expires_at TIMESTAMPTZ NOT NULL,
+//     created_at TIMESTAMPTZ DEFAULT now()
+// );
+// `
 
