@@ -1659,4 +1659,90 @@ Node.js version: 18.17.0 or higher
 
 ---
 
+### 27. OpenNext Build - Use Local Packages Instead of npx ✅
+**Issue**: Build failing with `wrangler@latest: not found` and Next.js build errors
+
+**Error Messages**:
+```
+npm run build failed inside OpenNext
+wrangler@latest: not found
+Command failed: npm run build
+```
+
+**Root Cause**:
+1. **Fragile npx approach**: Using `npx -p @opennextjs/cloudflare@latest -p wrangler@latest` is unreliable
+   - Packages installed temporarily by npx, not available when commands run
+   - `wrangler@latest` executed as separate command instead of being part of npx call
+   - Line wrapping in Cloudflare build UI can break multi-package npx commands
+
+2. **Build vs Deploy separation**: Build command tried to both build AND deploy in one step
+   - If build fails, hard to debug which step failed
+   - No early error detection for Next.js build issues
+
+**Solution**:
+Install @opennextjs/cloudflare and wrangler as devDependencies and use local CLI commands.
+
+**Files Modified**:
+- `frontend/package.json` - Updated scripts to use local packages
+  ```json
+  {
+    "scripts": {
+      "build": "next build",
+      "build:cf": "opennextjs-cloudflare build",
+      "deploy:cf": "opennextjs-cloudflare deploy"
+    },
+    "devDependencies": {
+      "@opennextjs/cloudflare": "^1.12.0",
+      "wrangler": "^4.47.0"
+    }
+  }
+  ```
+- `CLOUDFLARE-DEPLOYMENT.md` - Updated build configuration
+
+**Updated Cloudflare Pages Configuration**:
+```
+Framework preset: None
+Root directory: frontend
+Build command: npm ci --include=dev && npm run build && npm run build:cf
+Deploy command: npm run deploy:cf
+Build output directory: (blank)
+Node.js version: 18.17.0 or higher
+```
+
+**Key Improvements**:
+1. **Local packages**: @opennextjs/cloudflare and wrangler installed as devDependencies
+2. **Separate build steps**:
+   - `npm run build` - Runs Next.js build first, fails early on TypeScript/config errors
+   - `npm run build:cf` - OpenNext adaptation for Cloudflare Workers
+3. **Separate deploy command**: `npm run deploy:cf` runs after build completes
+4. **More reliable**: No dependency on npx package resolution during build
+
+**Build Flow**:
+```
+1. npm ci --include=dev → Installs @opennextjs/cloudflare, wrangler, and all deps
+2. npm run build → next build (fails early if TypeScript errors)
+3. npm run build:cf → opennextjs-cloudflare build (adapts for Workers)
+4. npm run deploy:cf → opennextjs-cloudflare deploy (uses local wrangler)
+```
+
+**Benefits**:
+- ✅ More reliable builds (local packages vs npx)
+- ✅ Early error detection (Next.js build runs first)
+- ✅ Easier debugging (separate build and deploy steps)
+- ✅ No npx package resolution issues
+- ✅ Clearer error messages when steps fail
+
+**Previous Issues Fixed**:
+- ❌ Session #26: npx -p approach was fragile, wrangler not found
+- ✅ Session #27: Local packages approach is reliable and maintainable
+
+**Impact**:
+- Build process more robust and easier to debug
+- TypeScript/Next.js errors surface immediately
+- OpenNext and Wrangler use stable local versions
+
+**Result**: OpenNext build now uses locally installed packages with separate build and deploy commands for better reliability.
+
+---
+
 *Last Updated: November 15, 2025*

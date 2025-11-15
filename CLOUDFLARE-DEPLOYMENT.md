@@ -69,11 +69,12 @@ NEXT_PUBLIC_API_URL=https://your-backend-api.com
 The build follows these steps:
 1. Cloudflare sets working directory to `frontend/` (based on Root directory setting)
 2. Runs the build command which:
-   - **Step 1**: `npm ci --include=dev` - Installs all dependencies (including devDependencies) from `frontend/package-lock.json`
-   - **Step 2**: `npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build` - Builds Next.js app with OpenNext
-   - **Step 3**: `npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare deploy` - Deploys to Cloudflare Workers
-3. OpenNext builds the Next.js app for Cloudflare Workers with full SSR support
-4. Deployment happens automatically (no manual upload needed)
+   - **Step 1**: `npm ci --include=dev` - Installs all dependencies from `frontend/package-lock.json`
+   - **Step 2**: `npm run build` - Runs Next.js build (`next build`), fails early if TypeScript/config errors
+   - **Step 3**: `npm run build:cf` - OpenNext adapts the Next.js build for Cloudflare Workers
+3. Runs the deploy command:
+   - **Step 4**: `npm run deploy:cf` - Wrangler deploys to Cloudflare Workers
+4. Deployment completes automatically
 
 **Benefits of OpenNext**:
 - Full Next.js SSR/ISR support on Cloudflare
@@ -150,17 +151,22 @@ If you're seeing the OpenNext build error, follow these steps:
    - **Root directory**: `frontend`
    - **Build command**:
      ```bash
-     npm ci --include=dev && npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build && npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare deploy
+     npm ci --include=dev && npm run build && npm run build:cf
+     ```
+   - **Deploy command**:
+     ```bash
+     npm run deploy:cf
      ```
    - **Build output directory**: (leave BLANK)
    - **Node.js version**: 18.17.0 or higher
 4. **Save** and **Retry deployment**
 
 **Why This Works**:
-- `npm ci --include=dev` installs all deps BEFORE OpenNext runs (prevents "module not found" errors)
-- `--yes` flag makes npx non-interactive
-- Root directory `frontend` ensures OpenNext finds `open-next.config.ts`
-- Build command is a single line with `&&` to ensure sequential execution
+- `npm ci --include=dev` installs @opennextjs/cloudflare and wrangler locally (no npx needed)
+- `npm run build` runs Next.js build first, surfaces errors early
+- `npm run build:cf` uses local OpenNext CLI (more reliable)
+- `npm run deploy:cf` uses local Wrangler CLI for deployment
+- Separate deploy command ensures build completes before deployment
 
 After updating settings, OpenNext will build and deploy automatically.
 
