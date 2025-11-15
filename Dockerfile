@@ -1,10 +1,18 @@
 # syntax=docker/dockerfile:1
 
 # Stage 1: Install all workspace dependencies
-FROM node:18-alpine AS deps
+FROM node:22-bullseye AS deps
 
-# Install bash (required for start.sh)
-RUN apk add --no-cache bash
+# Install bash and canvas system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    build-essential \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -16,10 +24,10 @@ COPY backend/package.json ./backend/package.json
 COPY frontend/package.json ./frontend/package.json
 
 # Install all workspace dependencies
-RUN npm ci --ignore-scripts --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 # Stage 2: Build frontend
-FROM node:18-alpine AS frontend-builder
+FROM node:22-bullseye AS frontend-builder
 WORKDIR /app
 
 # Copy node_modules from deps stage
@@ -34,10 +42,18 @@ WORKDIR /app/frontend
 RUN npm run build
 
 # Stage 3: Production runtime
-FROM node:18-alpine AS runner
+FROM node:22-bullseye-slim AS runner
 
-# Install bash (required for start.sh)
-RUN apk add --no-cache bash
+# Install bash and runtime canvas dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libjpeg62-turbo \
+    libgif7 \
+    librsvg2-2 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -51,7 +67,7 @@ COPY backend/package.json ./backend/package.json
 COPY frontend/package.json ./frontend/package.json
 
 # Install only production dependencies for all workspaces
-RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # Copy backend source
 COPY backend/ ./backend/
