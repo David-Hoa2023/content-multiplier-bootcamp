@@ -2991,4 +2991,161 @@ npm ci  # Installs all workspaces correctly ✅
 
 ---
 
+## 24. Rollback Node.js 22 Upgrade and Canvas Changes ✅
+
+**Date**: November 15, 2025
+
+### Issue
+User requested to rollback the Node.js 22 upgrade and canvas support changes that were implemented to fix the `process.getBuiltinModule` error.
+
+### Actions Taken
+
+#### 1. Identified Commits to Revert ✅
+```bash
+git log --oneline -5
+# fb67d38 docs: document Node.js 22 upgrade and canvas support for pdf-parse
+# d8f80ff fix: upgrade Node.js to v22 and add canvas support for pdf-parse
+```
+
+#### 2. Reverted Both Commits ✅
+```bash
+git revert --no-edit fb67d38 d8f80ff
+# Created two new revert commits
+```
+
+#### 3. Pushed Rollback to GitHub ✅
+```bash
+git push
+# Successfully pushed to main branch
+```
+
+### What Was Rolled Back
+
+**Dockerfiles**:
+- ❌ Reverted: `FROM node:22-bullseye` and `FROM node:22-bullseye-slim`
+- ✅ Restored: `FROM node:18-alpine` (all stages)
+- ❌ Removed: Canvas system dependencies (Cairo, Pango, JPEG, GIF, librsvg)
+- ✅ Restored: Lightweight Alpine-based images
+
+**Backend Dependencies**:
+- ❌ Removed: `"canvas": "^2.11.2"` from backend/package.json
+- ✅ Restored: Original dependency list without canvas
+- ✅ Updated: package-lock.json back to pre-canvas state
+
+**Documentation**:
+- ❌ Removed: Section 23 documenting Node.js 22 upgrade
+- ✅ Added: This section documenting the rollback
+
+### Current State After Rollback
+
+**Backend Dockerfile** (`backend/Dockerfile`):
+```dockerfile
+FROM node:18-alpine AS deps        ✅ Restored
+FROM node:18-alpine AS builder     ✅ Restored
+FROM node:18-alpine AS runner      ✅ Restored
+```
+
+**Root Dockerfile** (`Dockerfile`):
+```dockerfile
+FROM node:18-alpine AS deps         ✅ Restored
+FROM node:18-alpine AS frontend-builder  ✅ Restored
+FROM node:18-alpine AS runner       ✅ Restored
+```
+
+**Backend Dependencies**:
+- ✅ No canvas package
+- ✅ Original dependencies only
+- ✅ pdf-parse still present (but will have runtime issues)
+
+### Commits Created
+```
+23a8fc8 - Revert "fix: upgrade Node.js to v22 and add canvas support for pdf-parse"
+56ce417 - Revert "docs: document Node.js 22 upgrade and canvas support for pdf-parse"
+```
+
+### Impact
+
+**What This Means**:
+- ✅ Codebase reverted to Node 18 without canvas
+- ⚠️ Original `process.getBuiltinModule` error will return
+- ⚠️ PDF text extraction via pdf-parse will still fail
+- ⚠️ Knowledge base PDF upload functionality will not work
+
+**Known Issue (Not Fixed)**:
+```
+TypeError: process.getBuiltinModule is not a function
+Warning: DOMMatrix is not defined
+Warning: ImageData is not defined
+Warning: Path2D is not defined
+```
+
+This error will occur when:
+- Backend attempts to process PDF files
+- Knowledge service tries to extract text from PDFs
+- Any route using pdf-parse is called
+
+### Alternative Solutions (If Needed)
+
+If PDF processing is still required, consider these alternatives:
+
+1. **Use Different PDF Library**:
+   - `pdf-lib` - Pure JavaScript, no canvas needed
+   - `pdfjs-dist` with custom worker setup
+   - External PDF processing service
+
+2. **Move PDF Processing Off Main Service**:
+   - Create separate microservice with Node 22 + canvas
+   - Call it from main backend when needed
+   - Keep main service lightweight
+
+3. **Client-Side Processing**:
+   - Use `pdfjs-dist` in browser
+   - Extract text on client side
+   - Send extracted text to backend
+
+4. **Disable PDF Upload Feature**:
+   - Remove PDF processing routes
+   - Support only text/markdown documents
+   - Simplify knowledge base functionality
+
+### Files Modified
+- `backend/Dockerfile` - Reverted to Node 18 alpine
+- `backend/package.json` - Removed canvas dependency
+- `Dockerfile` - Reverted to Node 18 alpine
+- `package-lock.json` - Reverted dependency changes
+- `progress.md` - This update
+
+### Deployment Status
+- ✅ **Codebase**: Rolled back successfully
+- ✅ **GitHub**: Changes pushed to main branch
+- ⚠️ **Railway**: Will deploy Node 18 version (PDF processing broken)
+- ⚠️ **PDF Feature**: Not functional until alternative solution implemented
+
+### Next Steps (If PDF Support Needed)
+
+1. **Decide on PDF Strategy**:
+   - Fix with Node 22 + canvas (re-apply previous commits)
+   - Use alternative PDF library
+   - Disable PDF feature entirely
+
+2. **Test Current Deployment**:
+   - Verify backend starts successfully
+   - Confirm all non-PDF features work
+   - Document PDF upload failures
+
+3. **Plan Alternative**:
+   - Research canvas-free PDF libraries
+   - Consider external PDF service
+   - Evaluate client-side processing
+
+### Important Notes
+
+- This rollback was requested by user
+- Original Node 22 + canvas solution was technically correct
+- PDF processing will not work in current state
+- Consider alternative approaches if PDF support is required
+- Can re-apply Node 22 changes anytime by cherry-picking commits d8f80ff and fb67d38
+
+---
+
 *Last Updated: November 15, 2025 (Evening)*
