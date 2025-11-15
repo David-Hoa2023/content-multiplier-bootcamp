@@ -35,9 +35,10 @@ import {
 } from '@/components/ui/derivative-tabs'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SchedulingModal } from '@/components/ui/scheduling-modal'
-import { ContentPackSelector } from '@/components/ui/content-pack-selector'
+import { ContentPackSelector } from '@/components/ui/content-pack-selector'import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+
+// API_URL imported from @/lib/api-config
 
 interface ContentPack {
   pack_id: string

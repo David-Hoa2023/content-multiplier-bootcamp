@@ -14,7 +14,8 @@ import {
   Filter,
   Trash2
 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/hooks/use-toast'import { API_URL } from '@/lib/api-config';
+
 
 interface Idea {
   id: string
@@ -49,7 +50,7 @@ export default function ContentPlansPage() {
   const fetchContentPlans = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:4000/content-plans')
+      const response = await fetch(`${API_URL}/content-plans')
       const result = await response.json()
       
       if (result.success) {

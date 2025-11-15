@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { DraftEditor } from '@/components/ui/draft-editor'
+import { DraftEditor } from '@/components/ui/draft-editor'import { API_URL } from '@/lib/api-config';
+
 import {
   Select,
   SelectContent,
@@ -22,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const API_URL = 'http://localhost:4000'
+// API_URL imported from @/lib/api-config
 
 interface ContentPack {
   pack_id: string

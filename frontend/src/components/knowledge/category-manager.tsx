@@ -13,9 +13,10 @@ import {
   Palette,
   FileText
 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/hooks/use-toast'import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+
+// API_URL imported from @/lib/api-config
 
 interface Category {
   id: number

@@ -30,9 +30,10 @@ import {
   TrendingUp
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/hooks/use-toast'import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+
+// API_URL imported from @/lib/api-config
 
 const platformIcons: Record<string, JSX.Element> = {
   twitter: <Twitter className="h-4 w-4" />,

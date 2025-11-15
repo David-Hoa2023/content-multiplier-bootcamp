@@ -22,6 +22,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '@/lib/api-config';
 
 interface Idea {
   id: number;
@@ -41,8 +42,6 @@ interface ContentPlan {
   key_points: string | null;
   created_at: string;
 }
-
-const API_URL = 'http://localhost:4000';
 
 export default function Home() {
   const router = useRouter();

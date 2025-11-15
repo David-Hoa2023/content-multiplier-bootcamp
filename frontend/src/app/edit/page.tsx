@@ -15,9 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
+import { Label } from '@/components/ui/label'import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+
+// API_URL imported from @/lib/api-config
 
 interface ContentPack {
   pack_id: string

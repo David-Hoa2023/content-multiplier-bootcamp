@@ -9,9 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { useRouter, useParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import MarkdownEditor from '@/app/components/MarkdownEditor'
+import MarkdownEditor from '@/app/components/MarkdownEditor'import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+
+// API_URL imported from @/lib/api-config
 
 interface ContentPack {
   pack_id: string

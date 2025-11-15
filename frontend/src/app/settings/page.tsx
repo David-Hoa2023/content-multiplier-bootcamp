@@ -9,11 +9,11 @@ import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LLMProviderSwitcher } from '@/components/ui/llm-provider-switcher'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Share2, 
-  Settings, 
-  Wifi, 
-  WifiOff, 
+import {
+  Share2,
+  Settings,
+  Wifi,
+  WifiOff,
   ChevronRight,
   Twitter,
   Linkedin,
@@ -23,8 +23,7 @@ import {
   Mail,
   Globe
 } from 'lucide-react'
-
-const API_URL = 'http://localhost:4000'
+import { API_URL } from '@/lib/api-config'
 
 interface PlatformConfig {
   id: number

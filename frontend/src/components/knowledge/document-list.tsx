@@ -19,7 +19,8 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { formatDistanceToNow } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { vi } from 'date-fns/locale'import { API_URL } from '@/lib/api-config';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-const API_URL = 'http://localhost:4000'
+// API_URL imported from @/lib/api-config
 
 interface KnowledgeDocument {
   id: string

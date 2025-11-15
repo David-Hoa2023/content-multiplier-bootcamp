@@ -22,9 +22,10 @@ import {
   TestTube
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { PlatformConfigurationModal } from '@/components/ui/platform-configuration-modal'
+import { PlatformConfigurationModal } from '@/components/ui/platform-configuration-modal'import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+
+// API_URL imported from @/lib/api-config
 
 interface PlatformConfig {
   id: number

@@ -17,9 +17,10 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Slider } from '@/components/ui/slider'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Checkbox } from '@/components/ui/checkbox'import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+
+// API_URL imported from @/lib/api-config
 
 interface Category {
   id: number

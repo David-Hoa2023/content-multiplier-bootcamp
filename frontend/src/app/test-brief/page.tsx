@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { AppLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'import { API_URL } from '@/lib/api-config';
+
 
 export default function TestBriefPage() {
   const [planId, setPlanId] = useState('7')

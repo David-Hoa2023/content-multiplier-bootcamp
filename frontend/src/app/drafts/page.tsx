@@ -20,9 +20,10 @@ import {
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/hooks/use-toast'import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+
+// API_URL imported from @/lib/api-config
 
 interface ContentPack {
   pack_id: string

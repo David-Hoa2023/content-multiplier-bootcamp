@@ -17,9 +17,10 @@ import {
 import { Loader2, Play, CheckCircle2, XCircle, Sparkles, ArrowRight, Package, Lightbulb, FileText, Edit, CheckCircle, Share2, Send } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { DraftEditor } from '@/components/ui'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+
+// API_URL imported from @/lib/api-config
 
 interface Brief {
   brief_id: string

@@ -25,8 +25,9 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { API_URL } from '@/lib/api-config';
 
-const API_URL = 'http://localhost:4000'
+// API_URL imported from @/lib/api-config
 
 interface AnalyticsSummary {
   total_published: number

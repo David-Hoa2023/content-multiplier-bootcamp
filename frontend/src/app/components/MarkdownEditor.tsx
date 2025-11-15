@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'import { API_URL } from '@/lib/api-config';
+
 
 // Dynamically import to avoid SSR issues
 const MDEditor = dynamic(
@@ -24,7 +25,7 @@ const MDEditor = dynamic(
   { ssr: false }
 )
 
-const API_URL = 'http://localhost:4000'
+// API_URL imported from @/lib/api-config
 
 interface MarkdownEditorProps {
   value: string

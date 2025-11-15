@@ -20,7 +20,8 @@ import {
 } from 'lucide-react'
 import { useRouter, useParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown from 'react-markdown'import { API_URL } from '@/lib/api-config';
+
 
 interface Brief {
   brief_id: string
@@ -30,7 +31,7 @@ interface Brief {
   updated_at: string
 }
 
-const API_URL = 'http://localhost:4000'
+// API_URL imported from @/lib/api-config
 
 export default function BriefDetailPage() {
   const params = useParams()

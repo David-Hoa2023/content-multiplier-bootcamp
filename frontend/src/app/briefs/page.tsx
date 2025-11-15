@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { FileText, Plus, Search, ArrowRight, Package, Calendar, Trash2, Lightbulb, Edit, CheckCircle, Share2, Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Checkbox } from '@/components/ui/checkbox'import { API_URL } from '@/lib/api-config';
+
 
 interface Brief {
   brief_id: string
@@ -17,7 +18,7 @@ interface Brief {
   updated_at: string
 }
 
-const API_URL = 'http://localhost:4000'
+// API_URL imported from @/lib/api-config
 
 export default function BriefsPage() {
   const router = useRouter()

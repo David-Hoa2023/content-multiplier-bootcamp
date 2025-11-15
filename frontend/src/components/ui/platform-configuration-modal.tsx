@@ -26,7 +26,8 @@ import {
   Instagram,
   Video
 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/hooks/use-toast'import { API_URL } from '@/lib/api-config';
+
 
 interface PlatformConfig {
   id?: number
@@ -136,7 +137,7 @@ export function PlatformConfigurationModal({
     setTestResult(null)
     
     try {
-      const response = await fetch('http://localhost:4000/platforms/test-connection', {
+      const response = await fetch(`${API_URL}/platforms/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

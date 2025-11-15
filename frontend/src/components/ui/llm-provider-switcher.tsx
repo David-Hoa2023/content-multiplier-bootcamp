@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,18 +12,18 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
 } from '@/components/ui/tooltip'
 import { useToast } from '@/hooks/use-toast'
-import { 
-  Settings, 
-  Zap, 
-  DollarSign, 
-  TestTube, 
+import {
+  Settings,
+  Zap,
+  DollarSign,
+  TestTube,
   Star,
   Cpu,
   Brain,
@@ -32,6 +32,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react'
+import { API_URL } from '@/lib/api-config'
 
 const PROVIDERS = {
   openai: {
@@ -220,7 +221,7 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
 
         // Load API keys from database
         try {
-          const response = await fetch('http://localhost:4000/api/api-keys')
+          const response = await fetch(`${API_URL}/api/api-keys`)
           if (response.ok) {
             const dbApiKeys = await response.json()
             const keyMap: Record<string, string> = {}
@@ -271,7 +272,7 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
     // Save API key to database via backend API
     if (apiKey.trim()) {
       try {
-        const response = await fetch('http://localhost:4000/api/api-keys', {
+        const response = await fetch(`${API_URL}/api/api-keys`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -397,7 +398,7 @@ export const LLMProviderSwitcher: React.FC<LLMProviderSwitcherProps> = ({
     
     try {
       // Test API key connection via backend
-      const response = await fetch(`http://localhost:4000/api/api-keys/${localProvider.provider}/test`, {
+      const response = await fetch(`${API_URL}/api/api-keys/${localProvider.provider}/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

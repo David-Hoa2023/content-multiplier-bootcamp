@@ -26,7 +26,8 @@ import {
   Tag
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { vi } from 'date-fns/locale'import { API_URL } from '@/lib/api-config';
+
 
 interface Document {
   id: number
@@ -49,7 +50,7 @@ interface SearchResult {
   similarity_score?: number
 }
 
-const API_URL = 'http://localhost:4000'
+// API_URL imported from @/lib/api-config
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
