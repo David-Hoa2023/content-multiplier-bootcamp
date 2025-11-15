@@ -11,7 +11,7 @@ WORKDIR /app
 
 # --- Backend dependencies ---
 COPY backend/package.json backend/package-lock.json ./backend/
-RUN cd backend && npm ci --omit=dev
+RUN cd backend && npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 # --- Frontend dependencies (including dev dependencies for build) ---
 COPY frontend/package.json frontend/package-lock.json ./frontend/
@@ -49,7 +49,7 @@ RUN mkdir -p ./frontend/public
 
 # Install only production dependencies for frontend
 WORKDIR /app/frontend
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 # Go back to app root
 WORKDIR /app

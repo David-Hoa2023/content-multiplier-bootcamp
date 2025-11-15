@@ -4,13 +4,13 @@ FROM node:18-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# 1) Copy only manifests first for better caching
+COPY package.json package-lock.json ./
 
 # Install ALL dependencies (including devDependencies for build)
-RUN npm ci
+RUN npm ci --ignore-scripts --no-audit --no-fund
 
-# Copy source code
+# 2) Then bring in the rest of the source
 COPY . .
 
 # Build the application
@@ -22,13 +22,13 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# 1) Copy only manifests first
+COPY package.json package-lock.json ./
 
-# Install only production dependencies
-RUN npm ci --only=production
+# Install only production dependencies using the lockfile
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
-# Copy built files from builder stage
+# 2) Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
 
 # Create uploads directory
