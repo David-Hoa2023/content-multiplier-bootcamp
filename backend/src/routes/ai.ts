@@ -10,7 +10,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
   // GET available AI providers
   fastify.get('/ai/providers', async (request, reply) => {
     try {
-      const providers = getAvailableProviders();
+      const providers = await getAvailableProviders();
       return {
         success: true,
         data: providers,
@@ -80,7 +80,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
         });
       }
 
-      const availableProviders = getAvailableProviders();
+      const availableProviders = await getAvailableProviders();
       if (!availableProviders.includes(provider)) {
         return reply.status(400).send({
           success: false,
@@ -161,7 +161,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
       }
 
       // Auto-select provider if not provided or not available
-      const availableProviders = getAvailableProviders();
+      const availableProviders = await getAvailableProviders();
       if (availableProviders.length === 0) {
         return reply.status(400).send({
           success: false,

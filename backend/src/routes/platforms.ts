@@ -416,7 +416,7 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
       }
       
       let query = `
-        SELECT 
+        SELECT
           pc.platform_type,
           pc.platform_name,
           COUNT(pa.id) as total_events,
@@ -425,16 +425,16 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
           COUNT(CASE WHEN pa.event_type = 'clicked' THEN 1 END) as click_count,
           COUNT(CASE WHEN pa.event_type = 'opened' THEN 1 END) as open_count
         FROM platform_configurations pc
-        LEFT JOIN platform_analytics pa ON pc.id = pa.platform_config_id 
+        LEFT JOIN platform_analytics pa ON pc.id = pa.platform_config_id
           AND pa.occurred_at >= NOW() - INTERVAL '${days} days'
         WHERE pc.user_id = $1
       `
-      
-      const params = [1] // Default user
-      
+
+      const params: any[] = [1] // Default user
+
       if (platform_config_id) {
         query += ' AND pc.id = $2'
-        params.push(platform_config_id)
+        params.push(Number(platform_config_id))
       }
       
       query += ' GROUP BY pc.id, pc.platform_type, pc.platform_name ORDER BY pc.platform_type'
@@ -508,7 +508,7 @@ const platformRoutes: FastifyPluginAsync = async (fastify, opts) => {
             }
           }
         } catch (platformError: any) {
-          fastify.log.error('Platform publishing error:', platformError);
+          fastify.log.error({ err: platformError }, 'Platform publishing error');
           // Fall back to simulated success if platform fails
           publishResult = null;
         }

@@ -12,34 +12,34 @@ export interface PlatformCredentials {
   apiSecret?: string;
   accessToken?: string;
   accessTokenSecret?: string;
-  
+
   // Facebook
   appId?: string;
   appSecret?: string;
   pageId?: string;
   pageAccessToken?: string;
-  
+
   // LinkedIn
   clientId?: string;
   clientSecret?: string;
   redirectUri?: string;
-  
+
   // Instagram
   userId?: string;
-  
+
   // TikTok
   appKey?: string;
-  appSecret?: string;
-  
+  // Note: TikTok also uses appSecret, shared with Facebook field above
+
   // MailChimp
   mailchimpApiKey?: string;
   serverPrefix?: string;
-  
+
   // WordPress
   siteUrl?: string;
   username?: string;
   applicationPassword?: string;
-  
+
   // Generic fields
   [key: string]: any;
 }
@@ -143,8 +143,8 @@ export class PlatformCredentialsService {
     id: number, 
     updates: Partial<PlatformConfig>
   ): Promise<PlatformConfig> {
-    const updateFields = [];
-    const params = [];
+    const updateFields: string[] = [];
+    const params: any[] = [];
     let paramIndex = 1;
 
     if (updates.platform_name) {
@@ -262,17 +262,17 @@ export class PlatformCredentialsService {
       SELECT id, user_id, platform_type, platform_name, configuration,
              is_active, is_connected, last_tested_at, test_result,
              created_at, updated_at
-      FROM platform_configurations 
+      FROM platform_configurations
       WHERE user_id = $1
     `;
-    
-    const params = [filters?.user_id || 1];
-    
+
+    const params: any[] = [filters?.user_id || 1];
+
     if (filters?.platform_type) {
       query += ` AND platform_type = $${params.length + 1}`;
       params.push(filters.platform_type);
     }
-    
+
     if (filters?.is_active !== undefined) {
       query += ` AND is_active = $${params.length + 1}`;
       params.push(filters.is_active);

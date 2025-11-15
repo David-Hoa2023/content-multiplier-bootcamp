@@ -8,8 +8,10 @@ import { InstagramPlatform } from './social/InstagramPlatform'
 import { TikTokPlatform } from './social/TikTokPlatform'
 
 // Platform Registry
+type PlatformConstructor = new () => BasePlatform
+
 export class PlatformRegistry {
-  private static platforms = new Map<string, typeof BasePlatform>([
+  private static platforms = new Map<string, PlatformConstructor>([
     ['mailchimp', MailChimpPlatform],
     ['wordpress', WordPressPlatform],
     ['twitter', TwitterPlatform],
@@ -48,7 +50,7 @@ export class PlatformRegistry {
     return this.getSupportedPlatforms().map(type => this.getPlatformCapabilities(type)).filter(Boolean)
   }
 
-  static registerPlatform(type: string, platformClass: typeof BasePlatform) {
+  static registerPlatform(type: string, platformClass: PlatformConstructor) {
     this.platforms.set(type.toLowerCase(), platformClass)
   }
 

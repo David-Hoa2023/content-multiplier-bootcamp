@@ -7,6 +7,13 @@ export interface PlatformConfig {
   credentials?: Record<string, any>
   is_active: boolean
   is_connected?: boolean
+  // Platform-specific fields (optional at type-level; validate at runtime)
+  pageId?: string            // Facebook
+  userId?: string            // Instagram
+  organizationId?: string    // LinkedIn
+  appId?: string             // TikTok
+  advertiserIds?: string[]   // TikTok Ads
+  [key: string]: any
 }
 
 export interface AuthResult {
@@ -28,6 +35,7 @@ export interface PublishResult {
   message?: string
   error?: string
   metadata?: Record<string, any>
+  data?: any  // Allow additional platform-specific data
 }
 
 export interface ScheduleResult {
@@ -36,6 +44,7 @@ export interface ScheduleResult {
   message?: string
   scheduledTime?: Date
   error?: string
+  data?: any  // Allow additional platform-specific data
 }
 
 export interface ContentResult {

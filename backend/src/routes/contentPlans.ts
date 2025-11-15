@@ -240,7 +240,7 @@ export async function contentPlanRoutes(fastify: FastifyInstance) {
       const idea = ideaResult.rows[0]
 
       // Check available AI providers
-      const availableProviders = getAvailableProviders()
+      const availableProviders = await getAvailableProviders()
       if (availableProviders.length === 0) {
         return reply.status(400).send({
           success: false,

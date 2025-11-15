@@ -511,7 +511,7 @@ export class WordPressPlatform extends BasePlatform {
     return [...new Set([...hashtags, ...defaultTags])]
   }
 
-  private formatContent(content: string): string {
+  formatContent(content: string): string {
     // Convert markdown-like syntax to WordPress content
     return content
       .replace(/^## (.+)$/gm, '<h2>$1</h2>')
