@@ -1745,4 +1745,87 @@ Node.js version: 18.17.0 or higher
 
 ---
 
+### 28. Fix useSearchParams() Suspense Boundary Errors ✅
+**Issue**: Next.js 14.2+ build failing with "useSearchParams() should be wrapped in a suspense boundary" errors
+
+**Error Message**:
+```
+⨯ useSearchParams() should be wrapped in a suspense boundary at page "/derivatives"
+Error occurred prerendering page "/derivatives"
+
+> Export encountered errors on following paths:
+  /derivatives/page: /derivatives
+  /multi-platform-publisher/page: /multi-platform-publisher
+  /review/page: /review
+  /test-packs-draft/page: /test-packs-draft
+```
+
+**Root Cause**:
+- Next.js 14.2+ enforces stricter Suspense requirements for `useSearchParams()` hook
+- Pages using `useSearchParams()` during static generation need a Suspense boundary
+- Without boundary, Next.js throws build-time error preventing deployment
+- 4 pages affected: derivatives, review, multi-platform-publisher, test-packs-draft
+
+**Solution**:
+Added `loading.tsx` files to create automatic Suspense boundaries for each affected route (Pattern C - fastest approach).
+
+**Files Created**:
+- `frontend/src/app/derivatives/loading.tsx`
+- `frontend/src/app/review/loading.tsx`
+- `frontend/src/app/multi-platform-publisher/loading.tsx`
+- `frontend/src/app/test-packs-draft/loading.tsx`
+
+**File Content** (all 4 files):
+```tsx
+export default function Loading() {
+  return null;
+}
+```
+
+**Additional Fix**:
+- Added `@types/express` to devDependencies (missing TypeScript type definitions)
+
+**Why loading.tsx Works**:
+- Next.js automatically wraps route content in `<Suspense fallback={<Loading />}>`
+- Creates required boundary for `useSearchParams()` hook
+- Simplest solution - no refactoring of existing page components needed
+- Returns `null` for invisible loading state (instant transitions)
+
+**Alternative Approaches Not Used**:
+1. ❌ **Pattern A** (Server wrapper + Client child): Requires refactoring 4 pages
+2. ❌ **Pattern B** (Read params on server): Would change architecture
+3. ✅ **Pattern C** (loading.tsx): **Chosen - fastest, least invasive**
+
+**Build Results** (After Fix):
+```
+✓ Compiled successfully
+✓ Checking validity of types
+✓ Generating static pages (46/46)
+✓ Finalizing page optimization
+
+Route (app)                    Size     First Load JS
+├ ○ /derivatives              13.5 kB   250 kB
+├ ○ /review                    4.94 kB  245 kB
+├ ○ /multi-platform-publisher  3.17 kB  485 kB
+└ ○ /test-packs-draft         3.54 kB  486 kB
+
+○  (Static)  prerendered as static content
+```
+
+**Impact**:
+- ✅ All 46 pages build successfully
+- ✅ No more useSearchParams() Suspense errors
+- ✅ Minimal code changes (4 tiny files added)
+- ✅ No refactoring of existing pages needed
+- ✅ Build ready for Cloudflare deployment
+
+**Next.js Documentation**:
+- [Missing Suspense boundary error](https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout)
+- [useSearchParams() API](https://nextjs.org/docs/app/api-reference/functions/use-search-params)
+- [loading.tsx convention](https://nextjs.org/docs/app/api-reference/file-conventions/loading)
+
+**Result**: Next.js build now passes completely. All useSearchParams() errors resolved with automatic Suspense boundaries.
+
+---
+
 *Last Updated: November 15, 2025*
