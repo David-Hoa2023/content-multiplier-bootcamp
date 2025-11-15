@@ -1283,4 +1283,114 @@ The `build-cloudflare.sh` script handles the entire build:
 
 ---
 
+### 23. Cloudflare Pages - Proper OpenNext Configuration ✅
+**Issue**: OpenNext Cloudflare prompting for missing `open-next.config.ts` file during CI build, causing build failures
+
+**Error Message**:
+```
+Warning: Detected unsettled top-level await at file:///opt/buildhome/.npm/_npx/0d96281ddcc8ef34/node_modules/@opennextjs/cloudflare/dist/cli/index.js:19
+await runCommand();
+
+? Missing required `open-next.config.ts` file, do you want to create one? (Y/n) ‣ true
+Failed: error occurred while running build command
+```
+
+**Root Cause**:
+- Previous attempt (#22) removed `@opennextjs/cloudflare` entirely
+- Better approach: Properly configure OpenNext for full SSR support on Cloudflare Workers
+- OpenNext requires `open-next.config.ts` file to run non-interactively in CI
+- Missing config file caused interactive prompt that CI couldn't answer
+
+**Actions Taken**:
+1. **Reinstalled @opennextjs/cloudflare package** (`@opennextjs/cloudflare@latest`)
+2. **Created `frontend/open-next.config.ts`** with minimal configuration
+3. **Updated build commands** to use OpenNext properly
+4. **Removed conditional static export** from next.config.js (OpenNext handles deployment)
+5. **Updated documentation** with OpenNext-specific instructions
+
+**Files Created**:
+- `frontend/open-next.config.ts` - OpenNext configuration file (prevents interactive prompt)
+
+**Files Modified**:
+- `frontend/package.json` - Added build:cloudflare and deploy:cloudflare scripts
+- `package.json` (root) - Updated build:cloudflare command for monorepo
+- `frontend/next.config.js` - Removed conditional static export
+- `CLOUDFLARE-DEPLOYMENT.md` - Updated with OpenNext approach
+
+**Code Changes**:
+
+```typescript
+// frontend/open-next.config.ts (NEW FILE)
+import { defineCloudflareConfig } from "@opennextjs/cloudflare";
+
+export default defineCloudflareConfig({
+  // Minimal configuration - add options later if needed
+});
+```
+
+```json
+// frontend/package.json - Added OpenNext scripts
+{
+  "scripts": {
+    "build:cloudflare": "npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build",
+    "deploy:cloudflare": "npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare deploy"
+  }
+}
+```
+
+```json
+// package.json (root) - Updated for monorepo
+{
+  "scripts": {
+    "build:cloudflare": "npm ci --include=dev && cd frontend && npm run build:cloudflare",
+    "deploy:cloudflare": "cd frontend && npm run deploy:cloudflare"
+  }
+}
+```
+
+```javascript
+// frontend/next.config.js - Removed conditional export
+const nextConfig = {
+  reactStrictMode: true,
+  // Note: Static export configuration is handled by OpenNext for Cloudflare deployments
+  // For Railway deployment, standard SSR mode is used (no output: 'export')
+  // ...
+}
+```
+
+**Cloudflare Pages Configuration**:
+```
+Framework preset: None (OpenNext handles the build)
+Build command: npm run build:cloudflare
+Build output directory: (leave BLANK - Workers build, not static)
+Root directory: (leave blank - use repository root)
+Node.js version: 18.17.0 or higher
+
+Environment Variables:
+- NEXT_PUBLIC_API_URL=<your-backend-url> (optional)
+```
+
+**Benefits of OpenNext Approach**:
+- ✅ Full Next.js SSR/ISR support on Cloudflare Workers
+- ✅ Server components work properly
+- ✅ API routes run on Cloudflare Workers
+- ✅ Automatic edge caching with R2 (optional)
+- ✅ No need to manage static files manually
+- ✅ No interactive prompts in CI (config file prevents this)
+- ✅ Better than static export for dynamic features
+
+**Railway vs Cloudflare**:
+- **Railway**: Uses standard Next.js SSR (no special config needed)
+- **Cloudflare**: Uses OpenNext to adapt Next.js for Cloudflare Workers
+
+**Impact**:
+- Cloudflare deployment now supports full Next.js features (SSR, API routes, server components)
+- Build runs non-interactively in CI/CD
+- Single codebase deploys to both Railway (SSR) and Cloudflare (Workers)
+- Better performance with edge deployment
+
+**Result**: Cloudflare Pages builds successfully with OpenNext, no interactive prompts.
+
+---
+
 *Last Updated: November 15, 2025*

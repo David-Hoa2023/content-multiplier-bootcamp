@@ -1,4 +1,6 @@
-# Cloudflare Pages Deployment Guide
+# Cloudflare Pages Deployment Guide (OpenNext)
+
+This project uses **OpenNext Cloudflare** to deploy Next.js to Cloudflare Workers/Pages with full SSR support.
 
 ## Fixed Issues
 
@@ -8,46 +10,40 @@
 
 ### 2. Monorepo Workspace Support
 - **Problem**: Cloudflare Pages doesn't natively understand npm workspaces
-- **Solution**: Created custom build script (`build-cloudflare.sh`) to handle workspace installation and build
+- **Solution**: Updated build command to run `npm ci --include=dev` at root before building
 
-### 3. Static Export Configuration
-- **Problem**: Static export needs to be conditional for Railway vs Cloudflare deployments
-- **Solution**: Made static export conditional via `ENABLE_STATIC_EXPORT` environment variable
-
-### 4. OpenNext Interactive Prompt Error (LATEST FIX)
-- **Problem**: `@opennextjs/cloudflare` package causing interactive prompt errors during build
+### 3. OpenNext Interactive Prompt Error (FIXED)
+- **Problem**: `@opennextjs/cloudflare` package prompting for `open-next.config.ts` file during CI build
 - **Error**: `? Missing required open-next.config.ts file, do you want to create one? (Y/n)`
-- **Solution**: Removed `@opennextjs/cloudflare` dependency entirely, using standard Next.js static export instead
-- **IMPORTANT**: You MUST update your Cloudflare Pages build settings (see below)
+- **Solution**: Added `open-next.config.ts` file with minimal configuration
+- **Result**: Build now runs non-interactively in CI/CD
 
 ## Cloudflare Pages Configuration
 
-**CRITICAL**: You must update these settings in your Cloudflare Pages dashboard. The recent changes require updating the build command!
-
-### How to Update Settings
+### Build Settings
 
 1. Go to Cloudflare Pages dashboard
 2. Select your project
 3. Go to **Settings** → **Builds & deployments**
-4. Click **Configure Production deployments** (or Edit configuration)
-5. Update the settings as shown below:
+4. Configure as follows:
 
-### Build Settings
 ```
-Framework preset: Next.js
+Framework preset: None (OpenNext handles the build)
 Build command: npm run build:cloudflare
-Build output directory: frontend/out
+Build output directory: (leave BLANK - not needed for Workers builds)
 Root directory: (leave blank - use repository root)
 Node.js version: 18.17.0 or higher
 ```
 
-### Environment Variables (REQUIRED)
+**Important**:
+- **Do NOT set Build output directory** - OpenNext deploys to Cloudflare Workers, not static files
+- Root directory must be blank (monorepo workspace installation happens at root)
+
+### Environment Variables (Optional)
 ```
-ENABLE_STATIC_EXPORT=true
+NODE_ENV=production
 NEXT_PUBLIC_API_URL=https://your-backend-api.com
 ```
-
-**Important**: The `ENABLE_STATIC_EXPORT=true` variable is REQUIRED for Cloudflare deployment. Without it, the static export will be disabled.
 
 ## Important Notes
 
@@ -69,15 +65,20 @@ NEXT_PUBLIC_API_URL=https://your-backend-api.com
 ## Build Process
 
 The build follows these steps:
-1. Cloudflare runs `npm ci` to install workspace dependencies at repository root
-2. Runs `npm run build:cloudflare` which executes `build-cloudflare.sh`:
-   - Confirms workspace dependencies are installed
+1. Cloudflare runs the build command: `npm run build:cloudflare`
+2. This executes: `npm ci --include=dev && cd frontend && npm run build:cloudflare`
+   - Installs all workspace dependencies (including devDependencies)
    - Navigates to frontend directory
-   - Runs `npm run build` with Next.js static export (enabled via ENABLE_STATIC_EXPORT=true)
-3. Next.js generates static HTML files to `frontend/out` directory
-4. Cloudflare deploys the static files from `frontend/out`
+   - Runs OpenNext Cloudflare build: `npx --yes -p @opennextjs/cloudflare@latest -p wrangler@latest opennextjs-cloudflare build`
+3. OpenNext builds the Next.js app for Cloudflare Workers with full SSR support
+4. OpenNext automatically deploys to Cloudflare (no manual upload needed)
 
-**Note**: The `@opennextjs/cloudflare` package is NO LONGER used. We use standard Next.js static export instead.
+**Benefits of OpenNext**:
+- Full Next.js SSR/ISR support on Cloudflare
+- Server components work properly
+- API routes run on Cloudflare Workers
+- Automatic edge caching with R2 (optional)
+- No need to manage static files manually
 
 ## Troubleshooting
 
@@ -117,20 +118,38 @@ After successful deployment:
 - Backend API must be deployed separately (Railway, etc.)
 - Update `NEXT_PUBLIC_API_URL` to point to deployed backend
 
+## Files Added for OpenNext
+
+The following files are required for OpenNext to work:
+
+### `frontend/open-next.config.ts`
+```typescript
+import { defineCloudflareConfig } from "@opennextjs/cloudflare";
+
+export default defineCloudflareConfig({
+  // Minimal configuration - add options later if needed
+  // See: https://opennext.js.org/cloudflare/get-started
+});
+```
+
+This file prevents the interactive prompt error during CI builds.
+
 ## Quick Fix Checklist
 
-If you're seeing the OpenNext interactive prompt error, follow these steps:
+If you're seeing the OpenNext interactive prompt error:
 
+- [x] ✅ Added `frontend/open-next.config.ts` file
+- [x] ✅ Installed `@opennextjs/cloudflare` package
+- [x] ✅ Updated build command to use OpenNext
 - [ ] Go to Cloudflare Pages dashboard → Your Project → Settings
 - [ ] Update **Build command** to: `npm run build:cloudflare`
-- [ ] Update **Build output directory** to: `frontend/out`
+- [ ] **REMOVE** Build output directory (leave blank)
 - [ ] Ensure **Root directory** is blank/empty
-- [ ] Add environment variable: `ENABLE_STATIC_EXPORT=true`
-- [ ] Add environment variable: `NEXT_PUBLIC_API_URL=<your-backend-url>`
+- [ ] Add environment variable (optional): `NEXT_PUBLIC_API_URL=<your-backend-url>`
 - [ ] Save settings
 - [ ] Retry deployment
 
-After updating settings, trigger a new deployment. The OpenNext error should be gone.
+After updating settings, OpenNext will build and deploy automatically.
 
 ---
 
