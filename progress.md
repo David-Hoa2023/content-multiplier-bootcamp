@@ -1191,4 +1191,96 @@ const nextConfig = {
 
 ---
 
+### 22. Cloudflare Pages Deployment - OpenNext Interactive Prompt Error ✅
+**Issue**: Cloudflare Pages deployment failing with interactive prompt error from @opennextjs/cloudflare package
+
+**Error Message**:
+```
+Warning: Detected unsettled top-level await at file:///opt/buildhome/.npm/_npx/0d96281ddcc8ef34/node_modules/@opennextjs/cloudflare/dist/cli/index.js:19
+await runCommand();
+
+? Missing required `open-next.config.ts` file, do you want to create one? (Y/n) ‣ true
+Failed: error occurred while running build command
+```
+
+**Root Cause**:
+- Frontend package.json still contained `@opennextjs/cloudflare` dependency from earlier experiments
+- Package includes CLI commands (preview, deploy, upload) that expect interactive prompts
+- Cloudflare Pages build environment cannot handle interactive prompts
+- Proper build process should use standard Next.js static export via `build-cloudflare.sh` script
+
+**Actions Taken**:
+- Removed `@opennextjs/cloudflare` package from frontend dependencies
+- Removed opennextjs-cloudflare scripts (preview, deploy, upload) from package.json
+- Cleaned up package-lock.json (removed 11,774 lines of unused dependencies)
+- Documented correct Cloudflare Pages configuration
+
+**Files Modified**:
+- `frontend/package.json` - Removed @opennextjs/cloudflare dependency and scripts
+- `package-lock.json` - Cleaned up unused dependencies
+
+**Code Changes**:
+```json
+// Before (BROKEN)
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
+  },
+  "devDependencies": {
+    "@opennextjs/cloudflare": "^1.12.0",
+    // ...
+  }
+}
+
+// After (FIXED)
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "devDependencies": {
+    // @opennextjs/cloudflare removed
+    // ...
+  }
+}
+```
+
+**Correct Cloudflare Pages Configuration**:
+```
+Framework preset: Next.js
+Build command: npm run build:cloudflare
+Build output directory: frontend/out
+Root directory: (leave blank - use repository root)
+Node.js version: 18.17.0
+
+Environment Variables:
+- ENABLE_STATIC_EXPORT=true
+- NEXT_PUBLIC_API_URL=<your-backend-url>
+```
+
+**Build Process**:
+The `build-cloudflare.sh` script handles the entire build:
+1. Runs `npm ci` at root to install workspace dependencies
+2. Navigates to frontend directory
+3. Runs `npm run build` which uses Next.js static export (when ENABLE_STATIC_EXPORT=true)
+4. Outputs static files to `frontend/out`
+
+**Impact**:
+- Cloudflare Pages deployment now uses standard Next.js static export
+- No interactive prompts during build
+- Cleaner dependencies (reduced package size by 11,774 lines)
+- Build process fully automated and non-interactive
+
+**Result**: Cloudflare Pages builds successfully with standard Next.js static export.
+
+---
+
 *Last Updated: November 15, 2025*
