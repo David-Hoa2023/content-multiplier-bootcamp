@@ -119,9 +119,10 @@ export async function knowledgeRoutes(fastify: FastifyInstance) {
       })
     } catch (error) {
       console.error('Error uploading knowledge document:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       reply.code(500).send({
         success: false,
-        error: 'Failed to upload document'
+        error: `Failed to upload document: ${errorMessage}`
       })
     }
   })
