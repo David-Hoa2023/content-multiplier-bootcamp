@@ -78,46 +78,17 @@ export default function MultiPlatformPublisherPage() {
       const data = await response.json()
 
       if (data.success) {
-        // Transform backend data to match AnalyticsStats type
-        const stats: AnalyticsStats = {
-          overview: {
-            totalIdeas: data.data.overview.totalIdeas,
-            totalBriefs: data.data.overview.totalContentPlans,
-            totalDrafts: data.data.overview.totalDerivatives,
-            publishedPacks: data.data.overview.publishedDerivatives,
-            ideaToPublishDays: data.data.overview.averageDerivativesPerPlan
-          },
-          statusDistribution: {
-            draft: data.data.statusDistribution.draft,
-            review: 0,
-            approved: data.data.statusDistribution.scheduled,
-            published: data.data.statusDistribution.published
-          },
-          weeklyContent: data.data.weeklyContent.map((w: any) => ({
-            week: w.week,
-            ideas: w.ideas,
-            briefs: w.plans,
-            drafts: w.derivatives,
-            published: w.published
-          })),
-          llmUsage: {
-            totalCalls: data.data.overview.totalDerivatives * 5, // Estimate
-            errors: 0,
-            estimatedCost: data.data.overview.totalDerivatives * 0.05,
-            successRate: 99.0
-          },
-          recentActivity: data.data.recentActivity
-        }
-        setAnalyticsStats(stats)
+        // Pass backend data directly (now matches AnalyticsStats type)
+        setAnalyticsStats(data.data)
       }
     } catch (error) {
       console.error('Failed to fetch analytics:', error)
       // Use fallback data if API fails
       setAnalyticsStats({
-        overview: { totalIdeas: 0, totalBriefs: 0, totalDrafts: 0, publishedPacks: 0, ideaToPublishDays: 0 },
-        statusDistribution: { draft: 0, review: 0, approved: 0, published: 0 },
+        overview: { totalIdeas: 0, totalContentPlans: 0, totalDerivatives: 0, publishedDerivatives: 0, averageDerivativesPerPlan: 0 },
+        statusDistribution: { draft: 0, scheduled: 0, published: 0 },
         weeklyContent: [],
-        llmUsage: { totalCalls: 0, errors: 0, estimatedCost: 0, successRate: 0 },
+        platformBreakdown: [],
         recentActivity: []
       })
     } finally {

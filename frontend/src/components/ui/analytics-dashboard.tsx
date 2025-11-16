@@ -50,34 +50,34 @@ import { cn } from '@/lib/utils'
 export interface AnalyticsStats {
   overview: {
     totalIdeas: number
-    totalBriefs: number
-    totalDrafts: number
-    publishedPacks: number
-    ideaToPublishDays: number
+    totalContentPlans: number
+    totalDerivatives: number
+    publishedDerivatives: number
+    averageDerivativesPerPlan: number
   }
   statusDistribution: {
     draft: number
-    review: number
-    approved: number
+    scheduled: number
     published: number
   }
   weeklyContent: Array<{
     week: string
     ideas: number
-    briefs: number
-    drafts: number
+    plans: number
+    derivatives: number
     published: number
   }>
-  llmUsage: {
-    totalCalls: number
-    errors: number
-    estimatedCost: number
-    successRate: number
-  }
+  platformBreakdown: Array<{
+    platform: string
+    total: number
+    published: number
+    draft: number
+    scheduled: number
+  }>
   recentActivity: Array<{
     id: string
     title: string
-    type: 'idea' | 'brief' | 'draft' | 'published'
+    type: string
     status: string
     createdAt: string
     updatedAt: string
@@ -102,8 +102,7 @@ const timeFilterOptions = [
 
 const statusColors = {
   draft: '#94a3b8',
-  review: '#f59e0b',
-  approved: '#10b981',
+  scheduled: '#f59e0b',
   published: '#3b82f6'
 }
 
@@ -287,15 +286,20 @@ export function AnalyticsDashboard({
     const csvData = [
       ['Metric', 'Value'],
       ['Total Ideas', stats.overview.totalIdeas],
-      ['Total Briefs', stats.overview.totalBriefs],
-      ['Total Drafts', stats.overview.totalDrafts],
-      ['Published Packs', stats.overview.publishedPacks],
-      ['Avg. Days to Publish', stats.overview.ideaToPublishDays],
-      ['LLM Total Calls', stats.llmUsage.totalCalls],
-      ['LLM Errors', stats.llmUsage.errors],
-      ['LLM Estimated Cost', `$${stats.llmUsage.estimatedCost}`],
-      ['LLM Success Rate', `${stats.llmUsage.successRate}%`],
+      ['Total Content Plans', stats.overview.totalContentPlans],
+      ['Total Derivatives', stats.overview.totalDerivatives],
+      ['Published Derivatives', stats.overview.publishedDerivatives],
+      ['Avg. Derivatives per Plan', stats.overview.averageDerivativesPerPlan],
+      ['Draft Derivatives', stats.statusDistribution.draft],
+      ['Scheduled Derivatives', stats.statusDistribution.scheduled],
+      ['Published Derivatives', stats.statusDistribution.published],
     ]
+
+    // Add platform breakdown
+    stats.platformBreakdown.forEach(platform => {
+      csvData.push([`${platform.platform} Total`, platform.total])
+      csvData.push([`${platform.platform} Published`, platform.published])
+    })
 
     const csvContent = csvData.map(row => row.join(',')).join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv' })
@@ -317,20 +321,19 @@ export function AnalyticsDashboard({
   // Prepare chart data based on time filter
   const chartData = useMemo(() => {
     if (!stats) return []
-    
+
     return stats.weeklyContent.map(item => ({
       ...item,
-      total: item.ideas + item.briefs + item.drafts + item.published
+      total: item.ideas + item.plans + item.derivatives + item.published
     }))
   }, [stats, timeFilter])
 
   const statusData = useMemo(() => {
     if (!stats) return []
-    
+
     return [
       { name: 'Nháp', value: stats.statusDistribution.draft, color: statusColors.draft },
-      { name: 'Đang xem xét', value: stats.statusDistribution.review, color: statusColors.review },
-      { name: 'Đã duyệt', value: stats.statusDistribution.approved, color: statusColors.approved },
+      { name: 'Đã lên lịch', value: stats.statusDistribution.scheduled, color: statusColors.scheduled },
       { name: 'Đã xuất bản', value: stats.statusDistribution.published, color: statusColors.published },
     ]
   }, [stats])
@@ -398,109 +401,76 @@ export function AnalyticsDashboard({
           <StatsCard
             title="Tổng số Ideas"
             value={stats.overview.totalIdeas.toLocaleString()}
-            change={12}
             icon={Lightbulb}
             color="text-yellow-500"
-            description="Ideas được tạo trong kỳ"
+            description="Ideas trong database"
           />
-          
+
           <StatsCard
-            title="Briefs đã tạo"
-            value={stats.overview.totalBriefs.toLocaleString()}
-            change={8}
+            title="Content Plans"
+            value={stats.overview.totalContentPlans.toLocaleString()}
             icon={FileText}
             color="text-blue-500"
-            description="Briefs được tạo từ ideas"
+            description="Kế hoạch nội dung đã tạo"
           />
-          
+
           <StatsCard
-            title="Drafts hoàn thành"
-            value={stats.overview.totalDrafts.toLocaleString()}
-            change={-3}
+            title="Derivatives"
+            value={stats.overview.totalDerivatives.toLocaleString()}
             icon={PenTool}
             color="text-purple-500"
-            description="Content drafts đã viết"
+            description="Nội dung cho các platform"
           />
-          
+
           <StatsCard
-            title="Packs đã publish"
-            value={stats.overview.publishedPacks.toLocaleString()}
-            change={15}
+            title="Đã xuất bản"
+            value={stats.overview.publishedDerivatives.toLocaleString()}
             icon={CheckCircle}
             color="text-green-500"
-            description="Content packs đã xuất bản"
+            description="Derivatives đã publish"
           />
         </motion.div>
 
-        {/* Key Metrics Row */}
+        {/* Platform Breakdown */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          <motion.div variants={cardVariants}>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Thời gian TB</CardTitle>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Thời gian trung bình từ idea đến publish</p>
-                  </TooltipContent>
-                </Tooltip>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.overview.ideaToPublishDays}</div>
-                <p className="text-xs text-muted-foreground">ngày từ idea → publish</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={cardVariants}>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">LLM API Calls</CardTitle>
-                <Zap className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.llmUsage.totalCalls.toLocaleString()}</div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                  <span>{stats.llmUsage.errors} lỗi</span>
-                  <Separator orientation="vertical" className="h-3" />
-                  <span className="text-green-500">{stats.llmUsage.successRate}% thành công</span>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={cardVariants}>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Chi phí ước tính</CardTitle>
-                <DollarSign className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${stats.llmUsage.estimatedCost}</div>
-                <p className="text-xs text-muted-foreground">Chi phí LLM API trong kỳ</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={cardVariants}>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Tỷ lệ thành công</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.llmUsage.successRate}%</div>
-                <p className="text-xs text-muted-foreground">API calls thành công</p>
-              </CardContent>
-            </Card>
-          </motion.div>
+          {stats.platformBreakdown.slice(0, 6).map((platform) => (
+            <motion.div key={platform.platform} variants={cardVariants}>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{platform.platform}</CardTitle>
+                  <Badge variant="outline">{platform.total} total</Badge>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Draft</span>
+                      <span className="font-medium">{platform.draft}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Scheduled</span>
+                      <span className="font-medium">{platform.scheduled}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Published</span>
+                      <span className="font-medium text-green-500">{platform.published}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Tỷ lệ publish</span>
+                      <span className="font-semibold">
+                        {platform.total > 0 ? ((platform.published / platform.total) * 100).toFixed(1) : 0}%
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </motion.div>
 
         {/* Funnel Chart */}
@@ -552,21 +522,21 @@ export function AnalyticsDashboard({
                     />
                     <Area
                       type="monotone"
-                      dataKey="briefs"
+                      dataKey="plans"
                       stackId="1"
                       stroke="#3b82f6"
                       fill="#3b82f6"
                       fillOpacity={0.6}
-                      name="Briefs"
+                      name="Content Plans"
                     />
                     <Area
                       type="monotone"
-                      dataKey="drafts"
+                      dataKey="derivatives"
                       stackId="1"
                       stroke="#8b5cf6"
                       fill="#8b5cf6"
                       fillOpacity={0.6}
-                      name="Drafts"
+                      name="Derivatives"
                     />
                     <Area
                       type="monotone"
@@ -639,8 +609,8 @@ export function AnalyticsDashboard({
                   >
                     <div className="flex-shrink-0">
                       {activity.type === 'idea' && <Lightbulb className="h-4 w-4 text-yellow-500" />}
-                      {activity.type === 'brief' && <FileText className="h-4 w-4 text-blue-500" />}
-                      {activity.type === 'draft' && <PenTool className="h-4 w-4 text-purple-500" />}
+                      {activity.type === 'content_plan' && <FileText className="h-4 w-4 text-blue-500" />}
+                      {activity.type === 'derivative' && <PenTool className="h-4 w-4 text-purple-500" />}
                       {activity.type === 'published' && <CheckCircle className="h-4 w-4 text-green-500" />}
                     </div>
                     
