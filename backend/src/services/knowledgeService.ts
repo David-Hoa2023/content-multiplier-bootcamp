@@ -1,11 +1,9 @@
 import pool from '../db'
 import fs from 'fs'
 import path from 'path'
-import * as pdfParse from 'pdf-parse'
 import mammoth from 'mammoth'
 import { generateEmbedding } from './embeddingService'
-
-const pdf = (pdfParse as any).default || pdfParse
+import { getPdfParse } from '../utils/pdf'
 
 interface ProcessDocumentRequest {
   title: string
@@ -42,8 +40,9 @@ class KnowledgeService {
   private async extractTextFromFile(filePath: string, fileType: string): Promise<string> {
     try {
       if (fileType === 'application/pdf') {
+        const pdfParse = await getPdfParse()
         const dataBuffer = fs.readFileSync(filePath)
-        const data = await pdf(dataBuffer)
+        const data = await pdfParse(dataBuffer)
         return data.text
       } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         const result = await mammoth.extractRawText({ path: filePath })

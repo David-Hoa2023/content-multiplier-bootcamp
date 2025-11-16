@@ -36,9 +36,37 @@ const PORT = parseInt(process.env.PORT || '4000', 10);
 async function start() {
   try {
     // Register CORS
+    const allowedOrigins = [
+      process.env.FRONTEND_ORIGIN,
+      process.env.FRONTEND_URL,
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ].filter(Boolean) // Remove undefined values
+
     await fastify.register(cors, {
-      origin: true, // Allow all origins in development
+      origin: (origin, cb) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) {
+          cb(null, true)
+          return
+        }
+        
+        // Check if origin matches allowed origins or Vercel preview deployments
+        if (
+          allowedOrigins.some(allowed => origin.startsWith(allowed as string)) ||
+          origin.match(/\.vercel\.app$/) ||
+          origin.includes('localhost')
+        ) {
+          cb(null, true)
+        } else if (process.env.NODE_ENV === 'development') {
+          // Allow all origins in development
+          cb(null, true)
+        } else {
+          cb(new Error('Not allowed by CORS'), false)
+        }
+      },
       credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     });
 
     // Health check endpoint
