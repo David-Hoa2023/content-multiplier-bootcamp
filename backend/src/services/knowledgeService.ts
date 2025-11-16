@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import mammoth from 'mammoth'
 import { generateEmbedding } from './embeddingService'
-import { getPdfParse } from '../utils/pdf'
+import { parsePdfBuffer } from '../utils/pdf'
 
 interface ProcessDocumentRequest {
   title: string
@@ -40,10 +40,8 @@ class KnowledgeService {
   private async extractTextFromFile(filePath: string, fileType: string): Promise<string> {
     try {
       if (fileType === 'application/pdf') {
-        const pdfParse = await getPdfParse()
         const dataBuffer = fs.readFileSync(filePath)
-        const data = await pdfParse(dataBuffer)
-        return data.text
+        return await parsePdfBuffer(dataBuffer)
       } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         const result = await mammoth.extractRawText({ path: filePath })
         return result.value

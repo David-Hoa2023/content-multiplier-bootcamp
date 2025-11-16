@@ -169,9 +169,9 @@ export async function aiRoutes(fastify: FastifyInstance) {
         });
       }
 
-      // Priority order: openai -> deepseek -> gemini -> anthropic
-      const priorityOrder: AIProvider[] = ['openai', 'deepseek', 'gemini', 'anthropic'];
-      const requestedProvider = provider || 'openai';
+      // Priority order: deepseek -> gemini -> anthropic -> openai (OpenAI last due to billing issues)
+      const priorityOrder: AIProvider[] = ['deepseek', 'gemini', 'anthropic', 'openai'];
+      const requestedProvider = provider || 'deepseek';
       let selectedProvider = requestedProvider;
 
       if (!availableProviders.includes(requestedProvider)) {
