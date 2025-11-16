@@ -92,9 +92,19 @@ async function withRetry<T>(
     } catch (error) {
       lastError = error as Error;
 
-      // Don't retry on authentication errors
-      if (error instanceof Error && error.message.includes('401')) {
-        throw error;
+      // Don't retry on authentication, billing, or quota errors
+      if (error instanceof Error) {
+        const errorMessage = error.message.toLowerCase();
+        if (
+          errorMessage.includes('401') ||
+          errorMessage.includes('429') ||
+          errorMessage.includes('billing') ||
+          errorMessage.includes('quota') ||
+          errorMessage.includes('account is not active') ||
+          errorMessage.includes('insufficient')
+        ) {
+          throw error;
+        }
       }
 
       if (attempt < maxRetries - 1) {

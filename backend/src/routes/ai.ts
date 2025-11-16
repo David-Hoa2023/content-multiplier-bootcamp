@@ -235,7 +235,8 @@ export async function aiRoutes(fastify: FastifyInstance) {
       
       prompt += `\nKeep it concise and actionable.`;
 
-      const result = await generateContent({
+      // Try providers with automatic fallback on failure
+      let result = await generateContent({
         prompt,
         provider: selectedProvider,
         model,
@@ -243,10 +244,33 @@ export async function aiRoutes(fastify: FastifyInstance) {
         maxTokens: ragContext ? 750 : 500,
       });
 
+      // If first provider fails, try fallback providers
+      if (!result.success) {
+        console.log(`⚠️ Provider '${selectedProvider}' failed: ${result.error}. Trying fallback providers...`);
+
+        const fallbackProviders = availableProviders.filter(p => p !== selectedProvider);
+        for (const fallbackProvider of fallbackProviders) {
+          console.log(`🔄 Trying fallback provider: ${fallbackProvider}`);
+          result = await generateContent({
+            prompt,
+            provider: fallbackProvider,
+            temperature: temperature || 0.7,
+            maxTokens: ragContext ? 750 : 500,
+          });
+
+          if (result.success) {
+            console.log(`✅ Fallback provider '${fallbackProvider}' succeeded`);
+            selectedProvider = fallbackProvider;
+            break;
+          }
+          console.log(`⚠️ Fallback provider '${fallbackProvider}' also failed: ${result.error}`);
+        }
+      }
+
       if (!result.success) {
         return reply.status(500).send({
           success: false,
-          error: result.error,
+          error: `All providers failed. Last error: ${result.error}`,
         });
       }
 
