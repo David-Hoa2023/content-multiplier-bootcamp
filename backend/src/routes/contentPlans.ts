@@ -249,8 +249,9 @@ export async function contentPlanRoutes(fastify: FastifyInstance) {
       }
 
       // Auto-select provider if not provided or not available
-      const priorityOrder: AIProvider[] = ['openai', 'deepseek', 'gemini', 'anthropic']
-      const requestedProvider = provider || 'openai'
+      // Priority order: deepseek -> gemini -> anthropic -> openai (OpenAI last due to billing issues)
+      const priorityOrder: AIProvider[] = ['deepseek', 'gemini', 'anthropic', 'openai']
+      const requestedProvider = provider || 'deepseek'
       let selectedProvider = requestedProvider
 
       if (!availableProviders.includes(requestedProvider)) {
@@ -283,15 +284,38 @@ export async function contentPlanRoutes(fastify: FastifyInstance) {
       prompt += `- key_points phải được liệt kê rõ ràng, mỗi điểm một dòng\n`
       prompt += `- Chỉ trả về JSON, không có text thêm`
 
-      // Generate content plan using AI
+      // Generate content plan using AI with automatic fallback
       console.log(`Generating content plan for idea ${ideaId} using ${selectedProvider}...`)
-      const aiResult = await generateContent({
+      let aiResult = await generateContent({
         prompt,
         provider: selectedProvider,
         model,
         temperature: temperature || 0.7,
         maxTokens: 1500,
       })
+
+      // If first provider fails, try fallback providers
+      if (!aiResult.success) {
+        console.log(`⚠️ Provider '${selectedProvider}' failed: ${aiResult.error}. Trying fallback providers...`)
+
+        const fallbackProviders = availableProviders.filter(p => p !== selectedProvider)
+        for (const fallbackProvider of fallbackProviders) {
+          console.log(`🔄 Trying fallback provider: ${fallbackProvider}`)
+          aiResult = await generateContent({
+            prompt,
+            provider: fallbackProvider,
+            temperature: temperature || 0.7,
+            maxTokens: 1500,
+          })
+
+          if (aiResult.success) {
+            console.log(`✅ Fallback provider '${fallbackProvider}' succeeded`)
+            selectedProvider = fallbackProvider
+            break
+          }
+          console.log(`⚠️ Fallback provider '${fallbackProvider}' also failed: ${aiResult.error}`)
+        }
+      }
 
       if (!aiResult.success || !aiResult.content) {
         return reply.status(500).send({
