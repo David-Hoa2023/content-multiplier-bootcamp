@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { API_URL } from '@/lib/api-config'
 import { 
   Calendar, 
   Target, 
@@ -22,7 +23,8 @@ import {
   Send
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useToast } from '@/hooks/use-toast'import { API_URL } from '@/lib/api-config';
+import { useToast } from '@/hooks/use-toast'
+import { API_URL } from '@/lib/api-config';
 
 
 interface Idea {
@@ -73,7 +75,7 @@ export default function ContentPlanView({
   const fetchContentPlan = async (id: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:4000/content-plans/${id}`)
+      const response = await fetch(`${API_URL}/content-plans/${id}`)
       const result = await response.json()
       
       if (result.success) {
@@ -141,7 +143,7 @@ export default function ContentPlanView({
       setIsCreatingBrief(true)
       // Ensure planId is converted to string
       const planIdStr = String(planId)
-      const url = `http://localhost:4000/briefs/create-from-plan/${planIdStr}`
+      const url = `${API_URL}/briefs/create-from-plan/${planIdStr}`
       console.log('Calling API:', url)
       
       const response = await fetch(url, {

@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { AppLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'import { API_URL } from '@/lib/api-config';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { API_URL } from '@/lib/api-config';
 
 
 export default function TestBriefPage() {
@@ -18,7 +19,7 @@ export default function TestBriefPage() {
       setError(null)
       setResult(null)
 
-      const url = `http://localhost:4000/briefs/create-from-plan/${planId}`
+      const url = `${API_URL}/briefs/create-from-plan/${planId}`
       console.log('Testing API:', url)
 
       const response = await fetch(url, {

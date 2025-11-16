@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import ContentPlanView from './ContentPlanView'
+import { API_URL } from '@/lib/api-config'
 import { 
   FileText, 
   Lightbulb, 
@@ -14,7 +15,7 @@ import {
   Filter,
   Trash2
 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'import { API_URL } from '@/lib/api-config';
+import { useToast } from '@/hooks/use-toast'
 
 
 interface Idea {
@@ -86,7 +87,7 @@ export default function ContentPlansPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:4000/content-plans/${planId}`, {
+      const response = await fetch(`${API_URL}/content-plans/${planId}`, {
         method: 'DELETE'
       })
       const result = await response.json()
