@@ -164,12 +164,17 @@ export function DocumentUploader({ categories, onUploadSuccess }: DocumentUpload
         formData.append('category_ids', JSON.stringify(selectedCategories))
       }
 
+      console.log('Uploading to:', `${API_URL}/api/knowledge/upload`)
+      console.log('File:', selectedFile.name, selectedFile.size, selectedFile.type)
+
       const response = await fetch(`${API_URL}/api/knowledge/upload`, {
         method: 'POST',
         body: formData
       })
 
+      console.log('Response status:', response.status)
       const result = await response.json()
+      console.log('Response:', result)
 
       if (response.ok && result.success) {
         onUploadSuccess(result.data)
@@ -191,9 +196,10 @@ export function DocumentUploader({ categories, onUploadSuccess }: DocumentUpload
       }
     } catch (error) {
       console.error('Upload error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       toast({
         title: 'Lỗi tải lên',
-        description: 'Không thể tải lên tài liệu. Vui lòng thử lại.',
+        description: `Không thể tải lên tài liệu: ${errorMessage}`,
         variant: 'destructive'
       })
     } finally {
