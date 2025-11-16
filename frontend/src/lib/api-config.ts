@@ -14,6 +14,11 @@ const API_BASE =
 
 export const API_URL = API_BASE;
 
+// Debug: log the API URL in production
+if (typeof window !== 'undefined') {
+  console.log('API_URL configured as:', API_URL);
+}
+
 /**
  * Helper function to construct API endpoint URLs
  * @param path - The API endpoint path (e.g., '/ideas', '/ai/generate')
