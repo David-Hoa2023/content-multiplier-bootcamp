@@ -6,11 +6,28 @@
  * In production: Uses NEXT_PUBLIC_API_BASE_URL or NEXT_PUBLIC_BACKEND_URL environment variable
  */
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  process.env.NEXT_PUBLIC_BACKEND_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:4000";
+const getApiBase = () => {
+  // Check environment variables first
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
+  }
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return process.env.NEXT_PUBLIC_BACKEND_URL;
+  }
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  // In production (browser), use hardcoded production URL if no env var is set
+  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+    return 'https://content-multiplier-bootcamp-production.up.railway.app';
+  }
+
+  // Default to localhost for development
+  return "http://localhost:4000";
+};
+
+const API_BASE = getApiBase();
 
 export const API_URL = API_BASE;
 
