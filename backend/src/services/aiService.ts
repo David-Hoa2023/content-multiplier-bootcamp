@@ -71,7 +71,7 @@ async function getDeepseekClient(): Promise<OpenAI | null> {
 // Default models for each provider
 const DEFAULT_MODELS = {
   openai: 'gpt-4o-mini',
-  gemini: 'gemini-pro',
+  gemini: 'gemini-1.5-flash',
   anthropic: 'claude-3-5-sonnet-20241022',
   deepseek: 'deepseek-chat',
 };
@@ -381,7 +381,7 @@ export async function getAvailableProviders(): Promise<AIProvider[]> {
 export function getAvailableModels(provider: AIProvider): string[] {
   const models: Record<AIProvider, string[]> = {
     openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-    gemini: ['gemini-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'],
+    gemini: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'],
     anthropic: [
       'claude-3-5-sonnet-20241022',
       'claude-3-opus-20240229',
