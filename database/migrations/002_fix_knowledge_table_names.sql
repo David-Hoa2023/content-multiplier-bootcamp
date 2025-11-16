@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
     chunk_text TEXT NOT NULL,
     chunk_index INTEGER NOT NULL,
     token_count INTEGER,
-    embedding vector(1536),
+    embedding vector(768),  -- Gemini text-embedding-004 uses 768 dimensions
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

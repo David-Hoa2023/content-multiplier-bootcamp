@@ -1,10 +1,10 @@
-import OpenAI from 'openai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
-const openaiClient = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const geminiClient = process.env.GEMINI_API_KEY
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   : null
 
 export interface TextChunk {
@@ -64,22 +64,20 @@ export function chunkText(text: string, maxTokens: number = 500, overlap: number
 }
 
 /**
- * Generate embedding for text using OpenAI
+ * Generate embedding for text using Gemini
  */
 export async function generateEmbedding(text: string): Promise<EmbeddingResult> {
-  if (!openaiClient) {
-    throw new Error('OpenAI API key not configured')
+  if (!geminiClient) {
+    throw new Error('Gemini API key not configured')
   }
-  
+
   try {
-    const response = await openaiClient.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: text,
-    })
-    
+    const model = geminiClient.getGenerativeModel({ model: 'text-embedding-004' })
+    const result = await model.embedContent(text)
+
     return {
-      embedding: response.data[0].embedding,
-      tokenCount: response.usage.total_tokens
+      embedding: result.embedding.values,
+      tokenCount: Math.ceil(text.length / 4) // Rough token estimate
     }
   } catch (error) {
     console.error('Error generating embedding:', error)
