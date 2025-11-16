@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm ci",
+  "env": {
+    "NEXT_PUBLIC_API_BASE_URL": "https://content-multiplier-bootcamp-production.up.railway.app"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_BASE_URL": "https://content-multiplier-bootcamp-production.up.railway.app"
+    }
+  }
+}
