@@ -19,6 +19,7 @@ import derivativesRoutes from './routes/derivatives';
 import platformRoutes from './routes/platforms';
 import { knowledgeRoutes } from './routes/knowledge';
 import apiKeyRoutes from './routes/apiKeys';
+import analyticsRoutes from './routes/analytics';
 import { getAvailableProviders, initializeAIService } from './services/aiService';
 import pool from './db';
 
@@ -85,6 +86,7 @@ async function start() {
     await fastify.register(platformRoutes);
     await fastify.register(knowledgeRoutes);
     await fastify.register(apiKeyRoutes, { prefix: '/api/api-keys' });
+    await fastify.register(analyticsRoutes);
 
     // Test database connection (non-blocking)
     try {
