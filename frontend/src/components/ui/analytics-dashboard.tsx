@@ -485,7 +485,7 @@ export function AnalyticsDashboard({
             <CardContent>
               <FunnelChart
                 draft={stats.statusDistribution.draft}
-                derivatives={stats.overview.totalDrafts}
+                derivatives={stats.overview.totalDerivatives}
                 published={stats.statusDistribution.published}
               />
             </CardContent>
