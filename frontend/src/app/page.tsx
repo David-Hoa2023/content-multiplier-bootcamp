@@ -109,6 +109,7 @@ export default function Home() {
   const fetchIdeas = async () => {
     try {
       setLoading(true);
+      console.log('Fetching ideas from:', `${API_URL}/ideas`);
       const response = await fetch(`${API_URL}/ideas`);
 
       if (!response.ok) {
@@ -116,13 +117,16 @@ export default function Home() {
       }
 
       const data = await response.json();
+      console.log('Received data:', data);
       if (data.success) {
         setIdeas(data.data);
+        console.log('Ideas loaded:', data.data.length);
       } else {
         throw new Error(data.error || "Unknown error");
       }
     } catch (error) {
       console.error("Error fetching ideas:", error);
+      console.error("API_URL:", API_URL);
       let errorMessage = "Không thể tải danh sách ý tưởng.";
 
       if (error instanceof Error) {
@@ -723,6 +727,11 @@ export default function Home() {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">📋 Danh Sách Ý Tưởng</h2>
                 <ContentStats ideas={ideas} />
+              </div>
+
+              {/* Debug info - shows API URL being used */}
+              <div className="mb-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-muted-foreground">
+                API: {API_URL}
               </div>
 
               {loading ? (
