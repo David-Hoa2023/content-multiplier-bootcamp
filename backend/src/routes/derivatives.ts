@@ -76,11 +76,12 @@ const derivativesRoutes: FastifyPluginAsync = async (fastify, opts) => {
 
   // Create a single derivative directly (for seeding/testing)
   fastify.post('/derivatives', async (request, reply) => {
-    const { content_plan_id, platform, content, status = 'draft' } = request.body as {
+    const { content_plan_id, platform, content, status = 'draft', pack_id } = request.body as {
       content_plan_id: number
       platform: string
       content: string
       status?: string
+      pack_id?: string
     }
 
     try {
@@ -95,13 +96,16 @@ const derivativesRoutes: FastifyPluginAsync = async (fastify, opts) => {
       const hashtagMatches = content.match(/#\w+/g) || []
       const mentionMatches = content.match(/@\w+/g) || []
 
+      // Generate UUID for pack_id if not provided
+      const generatedPackId = pack_id || require('crypto').randomUUID()
+
       const result = await pool.query(
         `INSERT INTO derivatives
          (pack_id, content_plan_id, platform, content, character_count, hashtags, mentions, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
         [
-          `plan-${content_plan_id}`,
+          generatedPackId,
           content_plan_id,
           platform,
           content,
