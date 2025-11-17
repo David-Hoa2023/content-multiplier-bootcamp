@@ -27,9 +27,20 @@ const getApiBase = () => {
   return "http://localhost:4000";
 };
 
-const API_BASE = getApiBase();
+// Use a getter to ensure the URL is evaluated at runtime for client-side code
+let _cachedApiUrl: string | null = null;
 
-export const API_URL = API_BASE;
+export const API_URL = (() => {
+  // For server-side rendering, return production URL
+  if (typeof window === 'undefined') {
+    return process.env.NEXT_PUBLIC_API_BASE_URL || 'https://content-multiplier-bootcamp-production.up.railway.app';
+  }
+  // For client-side, cache the result
+  if (_cachedApiUrl === null) {
+    _cachedApiUrl = getApiBase();
+  }
+  return _cachedApiUrl;
+})();
 
 // Debug: log the API URL in production
 if (typeof window !== 'undefined') {

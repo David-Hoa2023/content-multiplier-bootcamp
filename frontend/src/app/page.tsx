@@ -130,13 +130,9 @@ export default function Home() {
           error.message.includes("Failed to fetch") ||
           error.message.includes("fetch")
         ) {
-          const apiUrl =
-            process.env.NEXT_PUBLIC_API_BASE_URL ||
-            process.env.NEXT_PUBLIC_API_URL ||
-            "backend server";
           errorMessage =
             "Không thể kết nối đến backend server.\n\nVui lòng kiểm tra:\n1. Backend server đã chạy chưa (" +
-            apiUrl +
+            API_URL +
             ")\n2. Docker Desktop đã được khởi động chưa\n3. Database đã được khởi động chưa (docker-compose up -d)";
         } else {
           errorMessage = "Không thể tải danh sách ý tưởng: " + error.message;
@@ -208,15 +204,11 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error creating idea:", error);
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        process.env.NEXT_PUBLIC_API_URL ||
-        "backend server";
       const errorMessage =
         error instanceof Error
           ? "Không thể tạo ý tưởng: " + error.message
           : "Không thể tạo ý tưởng. Vui lòng kiểm tra:\n1. Backend server đã chạy chưa (" +
-            apiUrl +
+            API_URL +
             ")\n2. Database đã được khởi động chưa\n3. Kết nối mạng có ổn định không";
       alert(errorMessage);
     } finally {
