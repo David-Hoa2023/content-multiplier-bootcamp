@@ -80,6 +80,21 @@ export default function MultiPlatformPublisherPage() {
       if (data.success) {
         // Pass backend data directly (now matches AnalyticsStats type)
         setAnalyticsStats(data.data)
+      } else {
+        // Backend returned error (e.g., database not connected)
+        console.error('Backend error:', data.error)
+        setAnalyticsStats({
+          overview: { totalIdeas: 0, totalContentPlans: 0, totalDerivatives: 0, publishedDerivatives: 0, averageDerivativesPerPlan: 0 },
+          statusDistribution: { draft: 0, scheduled: 0, published: 0 },
+          weeklyContent: [
+            { week: 'Week 1', ideas: 0, plans: 0, derivatives: 0, published: 0 },
+            { week: 'Week 2', ideas: 0, plans: 0, derivatives: 0, published: 0 },
+            { week: 'Week 3', ideas: 0, plans: 0, derivatives: 0, published: 0 },
+            { week: 'Week 4', ideas: 0, plans: 0, derivatives: 0, published: 0 }
+          ],
+          platformBreakdown: [],
+          recentActivity: []
+        })
       }
     } catch (error) {
       console.error('Failed to fetch analytics:', error)
@@ -87,7 +102,12 @@ export default function MultiPlatformPublisherPage() {
       setAnalyticsStats({
         overview: { totalIdeas: 0, totalContentPlans: 0, totalDerivatives: 0, publishedDerivatives: 0, averageDerivativesPerPlan: 0 },
         statusDistribution: { draft: 0, scheduled: 0, published: 0 },
-        weeklyContent: [],
+        weeklyContent: [
+          { week: 'Week 1', ideas: 0, plans: 0, derivatives: 0, published: 0 },
+          { week: 'Week 2', ideas: 0, plans: 0, derivatives: 0, published: 0 },
+          { week: 'Week 3', ideas: 0, plans: 0, derivatives: 0, published: 0 },
+          { week: 'Week 4', ideas: 0, plans: 0, derivatives: 0, published: 0 }
+        ],
         platformBreakdown: [],
         recentActivity: []
       })
