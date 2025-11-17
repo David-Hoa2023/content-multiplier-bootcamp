@@ -54,13 +54,13 @@ const derivativesRoutes: FastifyPluginAsync = async (fastify, opts) => {
   // Get derivatives by pack_id
   fastify.get('/derivatives/pack/:packId', async (request, reply) => {
     const { packId } = request.params as { packId: string }
-    
+
     try {
       const result = await pool.query(
         'SELECT * FROM derivatives WHERE pack_id = $1 ORDER BY platform',
         [packId]
       )
-      
+
       return {
         success: true,
         data: result.rows
@@ -70,6 +70,57 @@ const derivativesRoutes: FastifyPluginAsync = async (fastify, opts) => {
       return reply.status(500).send({
         success: false,
         error: 'Failed to fetch pack derivatives'
+      })
+    }
+  })
+
+  // Create a single derivative directly (for seeding/testing)
+  fastify.post('/derivatives', async (request, reply) => {
+    const { content_plan_id, platform, content, status = 'draft' } = request.body as {
+      content_plan_id: number
+      platform: string
+      content: string
+      status?: string
+    }
+
+    try {
+      if (!content_plan_id || !platform || !content) {
+        return reply.status(400).send({
+          success: false,
+          error: 'content_plan_id, platform, and content are required'
+        })
+      }
+
+      // Extract hashtags and mentions
+      const hashtagMatches = content.match(/#\w+/g) || []
+      const mentionMatches = content.match(/@\w+/g) || []
+
+      const result = await pool.query(
+        `INSERT INTO derivatives
+         (pack_id, content_plan_id, platform, content, character_count, hashtags, mentions, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        [
+          `plan-${content_plan_id}`,
+          content_plan_id,
+          platform,
+          content,
+          content.length,
+          hashtagMatches,
+          mentionMatches,
+          status
+        ]
+      )
+
+      return {
+        success: true,
+        data: result.rows[0]
+      }
+    } catch (error) {
+      fastify.log.error(error)
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to create derivative'
       })
     }
   })
