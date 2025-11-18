@@ -3,7 +3,8 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci --legacy-peer-deps",
+  "cleanUrls": true,
   "env": {
     "NEXT_PUBLIC_API_BASE_URL": "https://content-multiplier-bootcamp-production.up.railway.app",
     "NEXT_PUBLIC_API_URL": "https://content-multiplier-bootcamp-production.up.railway.app"
